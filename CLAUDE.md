@@ -123,5 +123,6 @@ Always respond in the user's language.
 <!-- DYNAMIC:START -->
 ## Current State
 Session: #1 (active) | Branch: main | Version: 1.3.5
-Tasks: 0/0 done, 0 active, 0 blocked
+Tasks: 0/7 done, 1 active, 0 blocked
+Active: readme
 <!-- DYNAMIC:END -->
