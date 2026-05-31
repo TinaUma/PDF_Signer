@@ -34,15 +34,11 @@ Thumbs.db
 .env
 .env.local
 
-# TAUSIK — db-wal и lock-файлы не нужны
-.tausik/*.db-wal
-.tausik/*.db-shm
+# TAUSIK — весь локальный рантайм фреймворка (venv, БД, конфиг с абсолютными путями)
+.tausik/
 .tausik-lib/
 
 # Claude Code / TAUSIK internal
 .claude/
 AGENTS.md
-
-.tausik/vendor/
-.tausik/rag/
-.tausik/tausik.log
+.mcp.json
