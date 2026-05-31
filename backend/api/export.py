@@ -2,10 +2,11 @@ import io
 import json
 from pathlib import Path
 
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form
 from fastapi.responses import Response
 from PIL import Image
 
+from errors import ApiError, DomainError
 from services import pdf_service
 from services.pdf_writer import export_pdf, save_output
 from services.composer import compose_page
@@ -24,6 +25,8 @@ IMAGE_OUTPUT = {
     ".webp": ("WEBP", "image/webp", ".webp"),
 }
 
+_ASPECT_TOLERANCE = 0.01  # 1% — absorbs integer rounding of rendered sizes
+
 
 def _validate_sig_ids(sigs: list[dict]):
     """Reject client-supplied signature ids that are not canonical UUIDs,
@@ -31,10 +34,7 @@ def _validate_sig_ids(sigs: list[dict]):
     path from it)."""
     for s in sigs:
         if not is_valid_sig_id(s.get("id")):
-            raise HTTPException(status_code=422, detail="Invalid signature id")
-
-
-_ASPECT_TOLERANCE = 0.01  # 1% — absorbs integer rounding of rendered sizes
+            raise ApiError("invalid_signature_id", "Invalid signature id")
 
 
 def _check_aspect(stage_w: float, stage_h: float, page_w: float, page_h: float):
@@ -45,12 +45,12 @@ def _check_aspect(stage_w: float, stage_h: float, page_w: float, page_h: float):
     distorted with no visible error. Enforcing the match here keeps sx == sy.
     """
     if stage_w <= 0 or stage_h <= 0 or page_w <= 0 or page_h <= 0:
-        raise HTTPException(status_code=422, detail="Invalid stage or page dimensions")
+        raise ApiError("invalid_dimensions", "Invalid stage or page dimensions")
     page_ar = page_w / page_h
     if abs(stage_w / stage_h - page_ar) > _ASPECT_TOLERANCE * page_ar:
-        raise HTTPException(
-            status_code=422,
-            detail="Stage dimensions do not match the page aspect ratio",
+        raise ApiError(
+            "stage_aspect_mismatch",
+            "Stage dimensions do not match the page aspect ratio",
         )
 
 
@@ -62,9 +62,10 @@ def _validate_signatures(sigs: list[dict], page_w: float, page_h: float):
             or s["x"] + s["w"] > page_w
             or s["y"] + s["h"] > page_h
         ):
-            raise HTTPException(
-                status_code=422,
-                detail=f"Signature coordinates out of page bounds: x={s['x']}, y={s['y']}, w={s['w']}, h={s['h']}",
+            raise ApiError(
+                "coords_out_of_bounds",
+                f"Signature coordinates out of page bounds: "
+                f"x={s['x']}, y={s['y']}, w={s['w']}, h={s['h']}",
             )
 
 
@@ -76,10 +77,10 @@ async def export_document(
     try:
         pages_payload = json.loads(pages)
     except (json.JSONDecodeError, ValueError):
-        raise HTTPException(status_code=422, detail="Invalid pages payload.")
+        raise ApiError("invalid_pages_payload", "Invalid pages payload.")
     data = await file.read()
     if len(data) > pdf_service.MAX_FILE_SIZE:
-        raise HTTPException(status_code=413, detail="File exceeds the size limit.")
+        raise ApiError("file_too_large", "File exceeds the size limit.", 413)
     ext = Path(file.filename or "").suffix.lower()
 
     if ext == ".pdf":
@@ -88,17 +89,16 @@ async def export_document(
         try:
             doc = fitz.open(stream=data, filetype="pdf")
         except Exception:
-            raise HTTPException(
-                status_code=422,
-                detail="Could not open PDF: file is corrupt or unsupported.",
+            raise ApiError(
+                "corrupt_pdf", "Could not open PDF: file is corrupt or unsupported."
             )
         try:
             pdf_service.ensure_render_safe(doc)
             for p in pages_payload:
                 idx = p["page_idx"]
                 if idx >= len(doc):
-                    raise HTTPException(
-                        status_code=422, detail=f"Page index {idx} out of range"
+                    raise ApiError(
+                        "page_index_out_of_range", f"Page index {idx} out of range"
                     )
                 # Signatures arrive in the frontend stage coordinate space
                 # (stage_w x stage_h, default 794x1123). pdf_writer scales from
@@ -113,8 +113,8 @@ async def export_document(
                     _check_aspect(stage_w, stage_h, rect.width, rect.height)
                 _validate_sig_ids(sigs)
                 _validate_signatures(sigs, stage_w, stage_h)
-        except ValueError as e:
-            raise HTTPException(status_code=422, detail=str(e))
+        except DomainError as e:
+            raise ApiError(e.code, e.message)
         finally:
             doc.close()
 
@@ -130,12 +130,12 @@ async def export_document(
         try:
             img = Image.open(io.BytesIO(data))
             img.load()  # force decode so corrupt/truncated data fails here
-        except HTTPException:
+        except ApiError:
             raise
         except Exception:
-            raise HTTPException(
-                status_code=422,
-                detail="Не удалось открыть изображение: файл повреждён или формат не поддерживается.",
+            raise ApiError(
+                "corrupt_image",
+                "Could not open image: file is corrupt or unsupported.",
             )
         page_info = pages_payload[0] if pages_payload else {}
         sigs = page_info.get("signatures", [])
@@ -143,15 +143,13 @@ async def export_document(
         stage_w = page_info.get("stage_w", 0)
         stage_h = page_info.get("stage_h", 0)
         if not stage_w or not stage_h:
-            raise HTTPException(
-                status_code=422, detail="stage_w and stage_h are required"
-            )
+            raise ApiError("stage_dims_required", "stage_w and stage_h are required")
         sx = img.width / stage_w
         sy = img.height / stage_h
         if sigs and abs(sx - sy) > _ASPECT_TOLERANCE * max(sx, sy):
-            raise HTTPException(
-                status_code=422,
-                detail="Stage dimensions do not match the image aspect ratio",
+            raise ApiError(
+                "stage_aspect_mismatch",
+                "Stage dimensions do not match the image aspect ratio",
             )
         scaled_sigs = [
             {
@@ -177,4 +175,4 @@ async def export_document(
         )
 
     else:
-        raise HTTPException(status_code=422, detail=f"Unsupported file type: {ext}")
+        raise ApiError("unsupported_file_type", f"Unsupported file type: {ext}")

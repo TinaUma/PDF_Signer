@@ -1,6 +1,7 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Query
+from fastapi import APIRouter, UploadFile, File, Query
 from fastapi.responses import FileResponse
 
+from errors import ApiError, DomainError
 from services import pdf_service
 from services.signature_service import (
     list_signatures,
@@ -24,11 +25,11 @@ async def upload_signature(
 ):
     data = await file.read()
     if len(data) > pdf_service.MAX_FILE_SIZE:
-        raise HTTPException(status_code=413, detail="File exceeds the size limit.")
+        raise ApiError("file_too_large", "File exceeds the size limit.", 413)
     try:
         result = save_signature(file.filename or "", data, remove_bg=remove_bg)
-    except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+    except DomainError as e:
+        raise ApiError(e.code, e.message)
     return result
 
 
@@ -36,12 +37,12 @@ async def upload_signature(
 def get_signature_image(sig_id: str):
     path = get_signature_path(sig_id)
     if not path:
-        raise HTTPException(status_code=404, detail="Signature not found")
+        raise ApiError("signature_not_found", "Signature not found", 404)
     return FileResponse(path, media_type="image/png")
 
 
 @router.delete("/{sig_id}")
 def remove_signature(sig_id: str):
     if not delete_signature(sig_id):
-        raise HTTPException(status_code=404, detail="Signature not found")
+        raise ApiError("signature_not_found", "Signature not found", 404)
     return {"deleted": sig_id}

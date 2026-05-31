@@ -7,6 +7,8 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+from errors import DomainError
+
 
 DATA_DIR = Path(os.environ.get("DATA_DIR", "./data"))
 SIGNATURES_DIR = DATA_DIR / "signatures"
@@ -70,9 +72,9 @@ def _remove_bg_adaptive(img: Image.Image, darkness_threshold: int = 35) -> Image
     if bbox is None:
         # No pixel survived the darkness threshold → no ink detected. Fail loudly
         # instead of silently saving a fully-transparent PNG.
-        raise ValueError(
-            "Не удалось распознать подпись: не удалось отделить чернила от фона. "
-            "Используйте более контрастное изображение или отключите удаление фона."
+        raise DomainError(
+            "signature_not_detected",
+            "No signature detected: could not separate ink from the background.",
         )
     return result.crop(bbox)
 
@@ -93,13 +95,13 @@ def list_signatures() -> list[dict]:
 def save_signature(filename: str, data: bytes, remove_bg: bool = True) -> dict:
     ext = Path(filename).suffix.lower()
     if ext not in SUPPORTED_EXTS:
-        raise ValueError(f"Unsupported format: {ext}")
+        raise DomainError("unsupported_signature_format", f"Unsupported format: {ext}")
 
     try:
         img = Image.open(io.BytesIO(data))
         img.load()  # force decode so a decompression bomb fails here
     except Image.DecompressionBombError:
-        raise ValueError("Image is too large to process safely.")
+        raise DomainError("image_too_large", "Image is too large to process safely.")
     if remove_bg:
         img = _remove_bg_adaptive(img)
     img = img.convert("RGBA")

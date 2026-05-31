@@ -27,6 +27,7 @@ def test_pdf_export_rejects_traversal_sig_id(client, make_pdf):
         data={"pages": _pdf_payload("../../etc/passwd")},
     )
     assert r.status_code == 422
+    assert r.json()["detail"]["code"] == "invalid_signature_id"
 
 
 def test_pdf_export_rejects_non_uuid_sig_id(client, make_pdf):

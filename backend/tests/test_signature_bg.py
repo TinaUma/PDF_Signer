@@ -28,7 +28,7 @@ def test_blank_white_image_rejected(client):
     img = Image.new("RGB", (200, 100), (255, 255, 255))
     r = _upload(client, _png_bytes(img), remove_bg=True)
     assert r.status_code == 422
-    assert "подпись" in r.json()["detail"].lower()
+    assert r.json()["detail"]["code"] == "signature_not_detected"
 
 
 def test_dark_ink_signature_accepted_and_cropped(client):

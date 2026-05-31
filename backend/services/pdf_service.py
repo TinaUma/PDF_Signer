@@ -5,6 +5,8 @@ from pathlib import Path
 import fitz  # PyMuPDF
 from PIL import Image
 
+from errors import DomainError
+
 
 SUPPORTED_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".webp"}
 SUPPORTED_PDF_EXTS = {".pdf"}
@@ -22,11 +24,15 @@ def ensure_render_safe(doc) -> None:
     """Reject PDFs that would be unsafe to rasterise (too many pages, or a page
     whose pixmap at RENDER_DPI would exceed MAX_PIXMAP_PIXELS). Raises ValueError."""
     if len(doc) > MAX_PAGES:
-        raise ValueError(f"PDF has too many pages (max {MAX_PAGES}).")
+        raise DomainError(
+            "too_many_pages", f"PDF has too many pages (max {MAX_PAGES})."
+        )
     scale = RENDER_DPI / 72.0
     for page in doc:
         if (page.rect.width * scale) * (page.rect.height * scale) > MAX_PIXMAP_PIXELS:
-            raise ValueError("PDF page is too large to render safely.")
+            raise DomainError(
+                "page_too_large", "PDF page is too large to render safely."
+            )
 
 
 def render_document(filename: str, data: bytes) -> list[str]:
@@ -38,7 +44,7 @@ def render_document(filename: str, data: bytes) -> list[str]:
     elif ext in SUPPORTED_IMAGE_EXTS:
         return _render_image(data)
     else:
-        raise ValueError(f"Unsupported file type: {ext}")
+        raise DomainError("unsupported_file_type", f"Unsupported file type: {ext}")
 
 
 def _render_pdf(data: bytes) -> list[str]:
@@ -60,7 +66,7 @@ def _render_image(data: bytes) -> list[str]:
         img = Image.open(io.BytesIO(data))
         img.load()  # force decode so a decompression bomb fails here
     except Image.DecompressionBombError:
-        raise ValueError("Image is too large to process safely.")
+        raise DomainError("image_too_large", "Image is too large to process safely.")
     buf = io.BytesIO()
     img.convert("RGBA").save(buf, format="PNG")
     return [base64.b64encode(buf.getvalue()).decode()]
