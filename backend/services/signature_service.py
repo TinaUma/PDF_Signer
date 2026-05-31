@@ -8,6 +8,7 @@ import numpy as np
 from PIL import Image
 
 from errors import DomainError
+from services.pdf_service import ensure_image_safe
 
 
 DATA_DIR = Path(os.environ.get("DATA_DIR", "./data"))
@@ -99,6 +100,7 @@ def save_signature(filename: str, data: bytes, remove_bg: bool = True) -> dict:
 
     try:
         img = Image.open(io.BytesIO(data))
+        ensure_image_safe(img)
         img.load()  # force decode so a decompression bomb fails here
     except Image.DecompressionBombError:
         raise DomainError("image_too_large", "Image is too large to process safely.")

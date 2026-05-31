@@ -129,9 +129,12 @@ async def export_document(
     elif ext in IMAGE_OUTPUT:
         try:
             img = Image.open(io.BytesIO(data))
+            pdf_service.ensure_image_safe(img)
             img.load()  # force decode so corrupt/truncated data fails here
         except ApiError:
             raise
+        except DomainError as e:
+            raise ApiError(e.code, e.message)
         except Exception:
             raise ApiError(
                 "corrupt_image",

@@ -79,3 +79,25 @@ def test_export_oversize_file_rejected(client, make_pdf, monkeypatch):
 def test_signature_oversize_file_rejected(client, monkeypatch):
     monkeypatch.setattr(pdf_service, "MAX_FILE_SIZE", 10)
     assert _upload_sig(client, _img_png((50, 40))).status_code == 413
+
+
+def test_signature_pixel_cap_explicit(client, monkeypatch):
+    # Hard cap independent of Pillow's 2x warning threshold.
+    monkeypatch.setattr(pdf_service, "MAX_PIXMAP_PIXELS", 100)
+    r = _upload_sig(client, _img_png((50, 40)))  # 2000 px > 100
+    assert r.status_code == 422
+    assert r.json()["detail"]["code"] == "image_too_large"
+
+
+def test_export_image_oversize_labeled_image_too_large(client, monkeypatch):
+    monkeypatch.setattr(pdf_service, "MAX_PIXMAP_PIXELS", 100)
+    payload = json.dumps(
+        [{"page_idx": 0, "stage_w": 50, "stage_h": 40, "signatures": []}]
+    )
+    r = client.post(
+        "/api/export",
+        files={"file": ("d.png", _img_png((50, 40)), "image/png")},
+        data={"pages": payload},
+    )
+    assert r.status_code == 422
+    assert r.json()["detail"]["code"] == "image_too_large"

@@ -35,6 +35,14 @@ def ensure_render_safe(doc) -> None:
             )
 
 
+def ensure_image_safe(img) -> None:
+    """Hard pixel cap, checked from the header before full decode. Pillow only
+    *raises* above 2x MAX_IMAGE_PIXELS, so this enforces the real limit and does
+    not depend on import order setting the global. Raises DomainError."""
+    if img.width * img.height > MAX_PIXMAP_PIXELS:
+        raise DomainError("image_too_large", "Image is too large to process safely.")
+
+
 def render_document(filename: str, data: bytes) -> list[str]:
     """Return list of base64-encoded PNG pages."""
     ext = Path(filename).suffix.lower()
@@ -64,6 +72,7 @@ def _render_pdf(data: bytes) -> list[str]:
 def _render_image(data: bytes) -> list[str]:
     try:
         img = Image.open(io.BytesIO(data))
+        ensure_image_safe(img)
         img.load()  # force decode so a decompression bomb fails here
     except Image.DecompressionBombError:
         raise DomainError("image_too_large", "Image is too large to process safely.")
