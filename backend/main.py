@@ -5,7 +5,7 @@ from api.document import router as document_router
 from api.export import router as export_router
 from api.signatures import router as signatures_router
 
-app = FastAPI(title="PDF Signer API", version="1.0.0")
+app = FastAPI(title="PDF Signer API", version="1.1.0")
 
 # The browser deployment talks to the API same-origin through the nginx proxy,
 # so CORS is only needed for the dev server and the Tauri webview. Restrict to

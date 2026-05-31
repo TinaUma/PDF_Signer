@@ -5,7 +5,7 @@
 **Инструмент для наложения рукописной подписи на документы**  
 **A tool for placing handwritten signatures on documents**
 
-[![Status](https://img.shields.io/badge/status-v1.0%20ready-brightgreen)](https://github.com/TinaUma/PDF_Signer)
+[![Status](https://img.shields.io/badge/version-1.1-brightgreen)](https://github.com/TinaUma/PDF_Signer)
 [![Python](https://img.shields.io/badge/python-3.11-blue?logo=python&logoColor=white)](https://python.org)
 [![React](https://img.shields.io/badge/react-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)

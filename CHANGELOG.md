@@ -15,9 +15,11 @@
 > Added / Changed / Fixed / Security. На релизе переименуйте секцию в версию с
 > датой и заведите новую **[Unreleased]**.
 
-### [Unreleased]
+### [1.1.0] — готовится к выпуску
 
 #### Added (Добавлено)
+- Нативный релиз: GitHub Actions собирает Windows `.exe` (Tauri + FastAPI
+  sidecar) и публикует prerelease при push в main (экспериментально).
 - Многостраничная подпись: подписи хранятся по страницам, при экспорте
   впечатывается каждая подписанная страница; кнопка «на все страницы».
 - Уникализация подписи (jitter): опциональная детерминированная вариация
@@ -70,9 +72,11 @@
 > Added / Changed / Fixed / Security. On release, rename the section to the new
 > version with a date and start a fresh **[Unreleased]**.
 
-### [Unreleased]
+### [1.1.0] — unreleased
 
 #### Added
+- Native release: GitHub Actions builds a Windows `.exe` (Tauri + FastAPI
+  sidecar) and publishes a prerelease on push to main (experimental).
 - Multi-page signing: signatures are tracked per page and every signed page is
   burned in on export, with an "all pages" action.
 - Signature uniquification ("jitter"): optional deterministic per-placement
