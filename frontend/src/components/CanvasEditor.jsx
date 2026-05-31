@@ -72,7 +72,7 @@ function SignatureNode({ layer, isSelected, onSelect, onChange, imageUrl }) {
 
 export function CanvasEditor({ pageDataUrl, pageWidth = 794, pageHeight = 1123, imageUrl, initialLayers = [], onLayersChange, onUndoStateChange }) {
   const { t } = useI18n()
-  const { layers, addSignature, updateLayer, removeLayer, undo, redo, canUndo, canRedo } = useCanvas(initialLayers)
+  const { layers, addSignature, updateLayer, updateLayerLive, checkpoint, removeLayer, undo, redo, canUndo, canRedo } = useCanvas(initialLayers)
   const [selectedId, setSelectedId] = useState(null)
   const stageRef = useRef(null)
 
@@ -166,20 +166,23 @@ export function CanvasEditor({ pageDataUrl, pageWidth = 794, pageHeight = 1123, 
               <label key={key} className="flex items-center gap-2">
                 <span className="w-4 text-gray-500">{label}</span>
                 <input type="number" value={Math.round(selectedLayer[key])}
-                  onChange={(e) => updateLayer(selectedLayer.id, { [key]: Number(e.target.value) })}
+                  onFocus={checkpoint}
+                  onChange={(e) => updateLayerLive(selectedLayer.id, { [key]: Number(e.target.value) })}
                   className="flex-1 border rounded px-1 py-0.5 w-0" />
               </label>
             ))}
             <label className="flex items-center gap-2">
               <span className="w-8 text-gray-500">{t('props.angle')}</span>
               <input type="number" value={Math.round(selectedLayer.rotation)}
-                onChange={(e) => updateLayer(selectedLayer.id, { rotation: Number(e.target.value) })}
+                onFocus={checkpoint}
+                onChange={(e) => updateLayerLive(selectedLayer.id, { rotation: Number(e.target.value) })}
                 className="flex-1 border rounded px-1 py-0.5 w-0" />
             </label>
             <label className="flex flex-col gap-1">
               <span className="text-gray-500">{t('props.opacity')} {Math.round(selectedLayer.opacity * 100)}%</span>
               <input type="range" min={0} max={100} value={Math.round(selectedLayer.opacity * 100)}
-                onChange={(e) => updateLayer(selectedLayer.id, { opacity: Number(e.target.value) / 100 })}
+                onPointerDown={checkpoint}
+                onChange={(e) => updateLayerLive(selectedLayer.id, { opacity: Number(e.target.value) / 100 })}
                 className="w-full" />
             </label>
             <button onClick={() => { removeLayer(selectedLayer.id); setSelectedId(null) }}

@@ -13,6 +13,11 @@ export function useHistory(initial = []) {
     setFuture([])
   }, [present])
 
+  // Live update with NO history entry — for continuous edits (typing in a number
+  // field, dragging the opacity slider). Pair with a single push() on commit so
+  // an edit session is one undo step, not one per keystroke/tick.
+  const set = useCallback((newState) => setPresent(newState), [])
+
   const undo = useCallback(() => {
     if (past.length === 0) return
     const prev = past[past.length - 1]
@@ -29,5 +34,5 @@ export function useHistory(initial = []) {
     setPresent(next)
   }, [future, present])
 
-  return { state: present, push, undo, redo, canUndo: past.length > 0, canRedo: future.length > 0 }
+  return { state: present, push, set, undo, redo, canUndo: past.length > 0, canRedo: future.length > 0 }
 }

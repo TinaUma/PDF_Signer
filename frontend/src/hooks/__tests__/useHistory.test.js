@@ -41,6 +41,13 @@ describe('useHistory', () => {
     expect(undos).toBe(20)
   })
 
+  it('set updates present WITHOUT adding an undo step', () => {
+    const { result } = renderHook(() => useHistory(['a']))
+    act(() => result.current.set(['b']))
+    expect(result.current.state).toEqual(['b'])
+    expect(result.current.canUndo).toBe(false)
+  })
+
   it('undo/redo on empty history are no-ops', () => {
     const { result } = renderHook(() => useHistory(['x']))
     act(() => result.current.undo())
