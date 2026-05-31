@@ -1,6 +1,7 @@
 # PDF Signer — Руководство разработчика (RU)
 
 English version: [DEVELOPMENT.en.md](DEVELOPMENT.en.md)
+· ← [README](../README.md#русский) · [CHANGELOG](../CHANGELOG.md#русский)
 
 ## Обзор
 
@@ -130,14 +131,32 @@ push в main и на pull request.
 - **Docker** (рекомендуется): `docker compose up` → http://localhost:8080.
   Бэкенд доступен только через nginx-proxy (без host-порта); контейнеры под
   non-root; `/data` — named volume.
-- **Нативный (.exe)**: запустите `scripts/build-exe.sh` (нужны Rust, Python +
-  PyInstaller, Node). Скрипт собирает FastAPI-sidecar (PyInstaller из
-  `backend/api_server.spec`), кладёт его под Rust target-triple, генерирует иконки,
-  запускает `tauri build` и складывает инсталляторы (`*-setup.exe`, `*.msi`) в
-  **`./release/`**. В CI `release.yml` собирает полный релиз при **мерже в main**:
+- **Нативное приложение (Tauri)**: `scripts/build-exe.sh` собирает под **текущую
+  ОС** и складывает инсталляторы в **`./release/`**. Скрипт собирает
+  FastAPI-sidecar (PyInstaller из `backend/api_server.spec`), кладёт его под Rust
+  target-triple (`api-server-<triple>[.exe]`, как в `externalBin` в
+  `tauri.conf.json`), затем запускает `tauri build` (bundle `targets: "all"` →
+  все форматы инсталляторов для этой ОС). Иконки версионируются в
+  `src-tauri/icons/`. Нативная сборка **Windows-first** (проверена там);
+  macOS/Linux идут тем же путём, но экспериментальны.
+
+  Общие пререквизиты: **Rust/cargo**, **Python 3.11 + PyInstaller**, **Node/npm**.
+
+  | ОС | Доп. пререквизиты | Сборка | Результат в `./release/` |
+  |---|---|---|---|
+  | **Windows** | WebView2 (предустановлен в Win 10/11) | `bash scripts/build-exe.sh` | `*-setup.exe` (NSIS), `*.msi` |
+  | **macOS** | Xcode Command Line Tools (`xcode-select --install`) | `bash scripts/build-exe.sh` | `*.dmg`, `*.app` |
+  | **Linux** | `webkit2gtk-4.1`, `libgtk-3-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev`, `build-essential` (имена для Debian/Ubuntu) | `bash scripts/build-exe.sh` | `*.deb`, `*.rpm`, `*.AppImage` |
+
+  Tauri почти не кросс-компилирует — собирайте инсталляторы каждой ОС **на этой
+  же ОС** (или её CI-раннере). Для запуска «голого» бинарника держите
+  `pdf-signer` и `api-server` рядом: приложение запускает sidecar из своей папки.
+
+  CI (`release.yml`) собирает полный релиз под **Windows** при **мерже в main**:
   авто-тег `v<версия>` (из `package.json`, если версия поднята) и публикация
   `.exe`/`.msi` + образов GHCR на этом теге; ручной тег `v*` запускает ту же
-  сборку. Артефакты также грузятся в `release/`.
+  сборку. macOS/Linux в CI пока не собираются — соберите их локально скриптом
+  выше.
 
 ## Интернационализация
 

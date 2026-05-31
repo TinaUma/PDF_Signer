@@ -32,15 +32,15 @@ PDF Signer — инструмент для наложения рукописно
 
 <div align="center">
 
-![Интерфейс — пошаговые подсказки и подпись на документе](screenshots/UXbest.PNG)
+![Интерфейс — пошаговые подсказки и подпись на документе](screenshots/01-interface.png)
 
 *Пошаговые подсказки в сайдбаре, канвас сразу готов к работе, кнопка экспорта активируется когда подпись размещена*
 
-![Результат — подписанный документ](screenshots/itog%20%20c%20podpisaniem.PNG)
+![Результат — подписанный документ](screenshots/02-signed-document.png)
 
 *Документ подписан — подпись точно в нужном месте*
 
-![Поворот подписи](screenshots/povorotPODPISI.PNG)
+![Поворот подписи](screenshots/03-rotate-signature.png)
 
 *Поворот, масштаб, прозрачность — полный контроль*
 
@@ -77,9 +77,13 @@ docker compose up
 
 Подписи сохраняются в `./data/signatures/` и не пропадают между перезапусками.
 
-> 🖥️ Нативная сборка (Tauri) пока экспериментальная — упаковка не завершена, используйте Docker.
+> 🖥️ Нативная сборка (Tauri) для Windows / macOS / Linux — `scripts/build-exe.sh`
+> собирает под текущую ОС; инструкции и пререквизиты в
+> [docs/DEVELOPMENT.ru.md](docs/DEVELOPMENT.ru.md#деплой). Windows-first
+> (проверено), macOS/Linux экспериментальны; для веба используйте Docker.
 > 📄 Техническое задание: [docs/PDF_Signer_TZ_v1.0.pdf](docs/PDF_Signer_TZ_v1.0.pdf)
 > 🛠 Руководство разработчика: [docs/DEVELOPMENT.ru.md](docs/DEVELOPMENT.ru.md)
+> 📜 История изменений: [CHANGELOG.md](CHANGELOG.md#русский)
 
 ### Как пользоваться
 
@@ -103,8 +107,9 @@ docker compose up
 
 ### Автор
 
-Разработано [Умашевой Т.](https://github.com/TinaUma) · портфолио-проект  
-AI-ассистент: [Claude Code](https://claude.ai/code) by Anthropic
+Разработано [TinaUma](https://github.com/TinaUma) · портфолио-проект  
+AI-ассистент: [Claude Code](https://claude.ai/code) by Anthropic  
+Процесс разработки под управлением [TAUSIK](https://github.com/Kibertum/tausik-core) — AI-agent governance ([SENAR v1.3](https://senar.tech))
 
 ---
 
@@ -122,15 +127,15 @@ PDF Signer is a tool for placing a handwritten signature (scan or photo) onto PD
 
 <div align="center">
 
-![Interface — step guide and signature on document](screenshots/UXbest.PNG)
+![Interface — step guide and signature on document](screenshots/01-interface.png)
 
 *Step-by-step hints in sidebar, canvas ready immediately, export button activates once a signature is placed*
 
-![Result — signed document](screenshots/itog%20%20c%20podpisaniem.PNG)
+![Result — signed document](screenshots/02-signed-document.png)
 
 *Document signed — signature placed exactly where needed*
 
-![Signature rotation](screenshots/povorotPODPISI.PNG)
+![Signature rotation](screenshots/03-rotate-signature.png)
 
 *Rotate, scale, opacity — full control*
 
@@ -167,9 +172,13 @@ Open in browser: **http://localhost:8080**
 
 Signatures are stored in `./data/signatures/` and persist across restarts.
 
-> 🖥️ A native (Tauri) build is experimental — packaging is incomplete; use Docker.
+> 🖥️ Native (Tauri) builds for Windows / macOS / Linux — `scripts/build-exe.sh`
+> builds for the host OS; instructions and prerequisites in
+> [docs/DEVELOPMENT.en.md](docs/DEVELOPMENT.en.md#deployment). Windows-first
+> (verified), macOS/Linux experimental; for the web app use Docker.
 > 📄 Spec: [docs/PDF_Signer_TZ_v1.0.pdf](docs/PDF_Signer_TZ_v1.0.pdf)
 > 🛠 Developer guide: [docs/DEVELOPMENT.en.md](docs/DEVELOPMENT.en.md)
+> 📜 Changelog: [CHANGELOG.md](CHANGELOG.md#english)
 
 ### How to use
 
@@ -194,7 +203,8 @@ Signatures are stored in `./data/signatures/` and persist across restarts.
 ### Author
 
 Built by [TinaUma](https://github.com/TinaUma) · portfolio project  
-AI assistant: [Claude Code](https://claude.ai/code) by Anthropic
+AI assistant: [Claude Code](https://claude.ai/code) by Anthropic  
+Development governed by [TAUSIK](https://github.com/Kibertum/tausik-core) — AI-agent governance ([SENAR v1.3](https://senar.tech))
 
 ---
 

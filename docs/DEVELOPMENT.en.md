@@ -1,6 +1,7 @@
 # PDF Signer — Developer Guide (EN)
 
 Русская версия: [DEVELOPMENT.ru.md](DEVELOPMENT.ru.md)
+· ← [README](../README.md#english) · [CHANGELOG](../CHANGELOG.md#english)
 
 ## Overview
 
@@ -130,14 +131,32 @@ push to main and on pull requests.
 - **Docker** (recommended): `docker compose up` → http://localhost:8080. The
   backend is reached only via the nginx proxy (no host port); containers run
   non-root; `/data` is a named volume.
-- **Native (.exe)**: run `scripts/build-exe.sh` (needs Rust, Python + PyInstaller,
-  Node). It builds the FastAPI sidecar (PyInstaller from `backend/api_server.spec`),
-  places it under the Rust target triple, generates icons, runs `tauri build`, and
-  collects the installers (`*-setup.exe`, `*.msi`) into **`./release/`**. In CI,
-  `release.yml` builds the full release on **merge to main**: it auto-tags
-  `v<version>` (read from `package.json`, when the version was bumped) and
-  publishes the `.exe`/`.msi` plus the GHCR images on that tag; a manual `v*`
-  tag triggers the same build. Artifacts are also uploaded into `release/`.
+- **Native app (Tauri)**: `scripts/build-exe.sh` builds for the **host OS** and
+  collects the installers into **`./release/`**. It builds the FastAPI sidecar
+  (PyInstaller from `backend/api_server.spec`), places it under the Rust target
+  triple (`api-server-<triple>[.exe]`, matching `externalBin` in
+  `tauri.conf.json`), then runs `tauri build` (bundle `targets: "all"` → every
+  installer format the host supports). Icons are committed under
+  `src-tauri/icons/`. The native build is **Windows-first** (verified there);
+  macOS/Linux use the same flow but are experimental.
+
+  Common prerequisites: **Rust/cargo**, **Python 3.11 + PyInstaller**, **Node/npm**.
+
+  | OS | Extra prerequisites | Build | Output in `./release/` |
+  |---|---|---|---|
+  | **Windows** | WebView2 (preinstalled on Win 10/11) | `bash scripts/build-exe.sh` | `*-setup.exe` (NSIS), `*.msi` |
+  | **macOS** | Xcode Command Line Tools (`xcode-select --install`) | `bash scripts/build-exe.sh` | `*.dmg`, `*.app` |
+  | **Linux** | `webkit2gtk-4.1`, `libgtk-3-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev`, `build-essential` (Debian/Ubuntu names) | `bash scripts/build-exe.sh` | `*.deb`, `*.rpm`, `*.AppImage` |
+
+  Tauri only cross-compiles within reason — build each OS's installers **on that
+  OS** (or its CI runner). To run the loose binary, keep `pdf-signer` and
+  `api-server` together: the app launches the sidecar from beside itself.
+
+  CI (`release.yml`) builds the full **Windows** release on **merge to main**: it
+  auto-tags `v<version>` (read from `package.json`, when the version was bumped)
+  and publishes the `.exe`/`.msi` plus the GHCR images on that tag; a manual `v*`
+  tag triggers the same build. macOS/Linux are not built in CI yet — build them
+  locally with the script above.
 
 ## Internationalization
 

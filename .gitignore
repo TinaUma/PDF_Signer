@@ -2,6 +2,9 @@
 __pycache__/
 *.py[cod]
 *.pyo
+.coverage
+.coverage.*
+htmlcov/
 .venv/
 venv/
 env/
@@ -19,12 +22,16 @@ dist/
 data/signatures/
 data/output/
 
+# PyInstaller sidecar build workpath (scripts/build-exe.sh --workpath build_pyi)
+backend/build_pyi/
+
 # Tauri build artifacts
 src-tauri/target/
 src-tauri/gen/
 src-tauri/binaries/
-src-tauri/icons/
-app-icon.png
+
+# App icon committed as a brand asset: app-icon.png is the 1024px master,
+# src-tauri/icons/* are the platform sizes fanned out from it via `tauri icon`.
 
 # Collected build output (installers) — produced by scripts/build-exe.sh / CI
 /release/
@@ -47,5 +54,7 @@ Thumbs.db
 
 # Claude Code / TAUSIK internal
 .claude/
+.claude-project/
+_cache/
 AGENTS.md
 .mcp.json
