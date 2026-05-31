@@ -33,6 +33,26 @@ def _validate_sig_ids(sigs: list[dict]):
             raise HTTPException(status_code=422, detail="Invalid signature id")
 
 
+_ASPECT_TOLERANCE = 0.01  # 1% — absorbs integer rounding of rendered sizes
+
+
+def _check_aspect(stage_w: float, stage_h: float, page_w: float, page_h: float):
+    """Ensure the client stage aspect ratio matches the page.
+
+    The backend scales x and y independently (sx = page/stage on each axis). If
+    the stage aspect ratio differs from the page, sx != sy and the signature is
+    distorted with no visible error. Enforcing the match here keeps sx == sy.
+    """
+    if stage_w <= 0 or stage_h <= 0 or page_w <= 0 or page_h <= 0:
+        raise HTTPException(status_code=422, detail="Invalid stage or page dimensions")
+    page_ar = page_w / page_h
+    if abs(stage_w / stage_h - page_ar) > _ASPECT_TOLERANCE * page_ar:
+        raise HTTPException(
+            status_code=422,
+            detail="Stage dimensions do not match the page aspect ratio",
+        )
+
+
 def _validate_signatures(sigs: list[dict], page_w: float, page_h: float):
     for s in sigs:
         if (
@@ -57,10 +77,16 @@ async def export_document(
     ext = Path(file.filename or "").suffix.lower()
 
     if ext == ".pdf":
-        try:
-            import fitz
+        import fitz
 
+        try:
             doc = fitz.open(stream=data, filetype="pdf")
+        except Exception:
+            raise HTTPException(
+                status_code=422,
+                detail="Could not open PDF: file is corrupt or unsupported.",
+            )
+        try:
             for p in pages_payload:
                 idx = p["page_idx"]
                 if idx >= len(doc):
@@ -74,11 +100,14 @@ async def export_document(
                 # rejections (small pages) and false passes (large pages).
                 stage_w = p.get("stage_w", 794)
                 stage_h = p.get("stage_h", 1123)
-                _validate_sig_ids(p["signatures"])
-                _validate_signatures(p["signatures"], stage_w, stage_h)
+                sigs = p["signatures"]
+                if sigs:
+                    rect = doc[idx].rect
+                    _check_aspect(stage_w, stage_h, rect.width, rect.height)
+                _validate_sig_ids(sigs)
+                _validate_signatures(sigs, stage_w, stage_h)
+        finally:
             doc.close()
-        except HTTPException:
-            raise
 
         result_bytes = export_pdf(data, pages_payload)
         save_output(result_bytes, "pdf")
@@ -110,6 +139,11 @@ async def export_document(
             )
         sx = img.width / stage_w
         sy = img.height / stage_h
+        if sigs and abs(sx - sy) > _ASPECT_TOLERANCE * max(sx, sy):
+            raise HTTPException(
+                status_code=422,
+                detail="Stage dimensions do not match the image aspect ratio",
+            )
         scaled_sigs = [
             {
                 **s,

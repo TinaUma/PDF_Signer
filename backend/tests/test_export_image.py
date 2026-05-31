@@ -59,3 +59,12 @@ def test_webp_source_exports_webp(client):
     r = _export(client, "doc.webp", _img_bytes("WEBP"))
     assert r.status_code == 200
     assert r.headers["content-type"] == "image/webp"
+
+
+def test_image_export_rejects_mismatched_stage_aspect(client):
+    # 50x40 image but a 50x200 stage -> sx != sy, would distort the signature.
+    sigs = [
+        {"id": "00000000-0000-4000-8000-000000000000", "x": 1, "y": 1, "w": 5, "h": 5}
+    ]
+    r = _export(client, "doc.png", _img_bytes("PNG"), sigs=sigs, stage=(50, 200))
+    assert r.status_code == 422

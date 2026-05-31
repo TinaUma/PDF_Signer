@@ -48,7 +48,11 @@ def test_dark_ink_signature_accepted_and_cropped(client):
 
 
 def test_blank_image_kept_when_bg_removal_disabled(client):
-    # With removal off, a plain image is stored as-is (no detection, no 422).
+    # With removal off, a plain image is stored as-is (no detection, no 422)
+    # and is NOT cropped — the stored PNG keeps the original 60x40 size.
     img = Image.new("RGB", (60, 40), (255, 255, 255))
     r = _upload(client, _png_bytes(img), remove_bg=False)
     assert r.status_code == 200
+    out_resp = client.get(f"/api/signatures/{r.json()['id']}/image")
+    out = Image.open(io.BytesIO(out_resp.content))
+    assert out.size == (60, 40)

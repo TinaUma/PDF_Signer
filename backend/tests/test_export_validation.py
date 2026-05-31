@@ -31,8 +31,10 @@ def _post(client, pdf, pages):
 
 
 def test_signature_within_stage_on_small_page_not_rejected(client, make_pdf):
-    # A 200pt-wide page: old bounds were page.rect.width*2 = 400, so a signature
-    # at x=700 (valid in the 794-wide stage) was wrongly rejected. Must pass now.
+    # A 200x300pt page: old bounds were page.rect.width*2 = 400, so a signature
+    # at x=700 (valid in the 794-wide stage) was wrongly rejected. Stage keeps the
+    # page aspect ratio (794x1191 == 200x300), so the aspect guard passes and the
+    # coordinate check (against stage_w=794) accepts x+w=780. Must pass now.
     pdf = make_pdf(width=200, height=300)
     sigs = [
         {
@@ -43,7 +45,7 @@ def test_signature_within_stage_on_small_page_not_rejected(client, make_pdf):
             "h": 40,
         }
     ]
-    r = _post(client, pdf, _pages(sigs))
+    r = _post(client, pdf, _pages(sigs, stage_w=794, stage_h=1191))
     assert r.status_code == 200
     assert r.headers["content-type"] == "application/pdf"
 
