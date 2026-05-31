@@ -97,7 +97,7 @@ export function useDocument() {
   }, [t])
 
   const goTo = useCallback((n) => {
-    setCurrentPage((prev) => Math.max(0, Math.min(n, pages.length - 1)))
+    setCurrentPage(Math.max(0, Math.min(n, pages.length - 1)))
   }, [pages.length])
 
   return {
