@@ -1,6 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Query
 from fastapi.responses import FileResponse
 
+from services import pdf_service
 from services.signature_service import (
     list_signatures,
     save_signature,
@@ -22,6 +23,8 @@ async def upload_signature(
     remove_bg: bool = Query(default=True),
 ):
     data = await file.read()
+    if len(data) > pdf_service.MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail="File exceeds the size limit.")
     try:
         result = save_signature(file.filename or "", data, remove_bg=remove_bg)
     except ValueError as e:

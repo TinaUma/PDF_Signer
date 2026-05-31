@@ -7,12 +7,14 @@ import fitz
 from PIL import Image
 
 from services.composer import compose_page
+from services.pdf_service import ensure_render_safe
 from services.signature_service import get_signatures_dir
 
 
 def export_pdf(pdf_data: bytes, pages_payload: list[dict]) -> bytes:
     """Burn signatures into PDF pages, return new PDF bytes."""
     src = fitz.open(stream=pdf_data, filetype="pdf")
+    ensure_render_safe(src)  # defense-in-depth: cap pages / pixmap area
     out = fitz.open()
     sig_dir = get_signatures_dir()
 

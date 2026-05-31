@@ -6,6 +6,7 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import Response
 from PIL import Image
 
+from services import pdf_service
 from services.pdf_writer import export_pdf, save_output
 from services.composer import compose_page
 from services.signature_service import get_signatures_dir, is_valid_sig_id
@@ -74,6 +75,8 @@ async def export_document(
 ):
     pages_payload = json.loads(pages)
     data = await file.read()
+    if len(data) > pdf_service.MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail="File exceeds the size limit.")
     ext = Path(file.filename or "").suffix.lower()
 
     if ext == ".pdf":
@@ -87,6 +90,7 @@ async def export_document(
                 detail="Could not open PDF: file is corrupt or unsupported.",
             )
         try:
+            pdf_service.ensure_render_safe(doc)
             for p in pages_payload:
                 idx = p["page_idx"]
                 if idx >= len(doc):
@@ -106,6 +110,8 @@ async def export_document(
                     _check_aspect(stage_w, stage_h, rect.width, rect.height)
                 _validate_sig_ids(sigs)
                 _validate_signatures(sigs, stage_w, stage_h)
+        except ValueError as e:
+            raise HTTPException(status_code=422, detail=str(e))
         finally:
             doc.close()
 

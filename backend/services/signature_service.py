@@ -95,7 +95,11 @@ def save_signature(filename: str, data: bytes, remove_bg: bool = True) -> dict:
     if ext not in SUPPORTED_EXTS:
         raise ValueError(f"Unsupported format: {ext}")
 
-    img = Image.open(io.BytesIO(data))
+    try:
+        img = Image.open(io.BytesIO(data))
+        img.load()  # force decode so a decompression bomb fails here
+    except Image.DecompressionBombError:
+        raise ValueError("Image is too large to process safely.")
     if remove_bg:
         img = _remove_bg_adaptive(img)
     img = img.convert("RGBA")
