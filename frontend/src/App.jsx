@@ -88,7 +88,9 @@ export default function App() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'signed.' + (sourceFileRef.current.name.endsWith('.pdf') ? 'pdf' : 'jpg')
+      const srcName = sourceFileRef.current.name
+      const srcExt = srcName.slice(srcName.lastIndexOf('.') + 1).toLowerCase()
+      a.download = 'signed.' + (srcName.toLowerCase().endsWith('.pdf') ? 'pdf' : srcExt)
       a.click()
       URL.revokeObjectURL(url)
     } catch (e) {

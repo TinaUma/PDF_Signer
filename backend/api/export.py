@@ -12,6 +12,17 @@ from services.signature_service import get_signatures_dir
 
 router = APIRouter(prefix="/api/export", tags=["export"])
 
+# Map source extension -> (PIL format, response media type, output extension).
+# Lets image export preserve the source format instead of always emitting JPEG.
+IMAGE_OUTPUT = {
+    ".jpg": ("JPEG", "image/jpeg", ".jpg"),
+    ".jpeg": ("JPEG", "image/jpeg", ".jpeg"),
+    ".png": ("PNG", "image/png", ".png"),
+    ".tiff": ("TIFF", "image/tiff", ".tiff"),
+    ".tif": ("TIFF", "image/tiff", ".tif"),
+    ".webp": ("WEBP", "image/webp", ".webp"),
+}
+
 
 def _validate_signatures(sigs: list[dict], page_w: float, page_h: float):
     for s in sigs:
@@ -67,8 +78,17 @@ async def export_document(
             headers={"Content-Disposition": "attachment; filename=signed.pdf"},
         )
 
-    elif ext in {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".webp"}:
-        img = Image.open(io.BytesIO(data))
+    elif ext in IMAGE_OUTPUT:
+        try:
+            img = Image.open(io.BytesIO(data))
+            img.load()  # force decode so corrupt/truncated data fails here
+        except HTTPException:
+            raise
+        except Exception:
+            raise HTTPException(
+                status_code=422,
+                detail="Не удалось открыть изображение: файл повреждён или формат не поддерживается.",
+            )
         page_info = pages_payload[0] if pages_payload else {}
         sigs = page_info.get("signatures", [])
         stage_w = page_info.get("stage_w", 0)
@@ -91,14 +111,15 @@ async def export_document(
         ]
         _validate_signatures(scaled_sigs, img.width, img.height)
         composed = compose_page(img, scaled_sigs, get_signatures_dir())
+        fmt, media_type, out_ext = IMAGE_OUTPUT[ext]
         buf = io.BytesIO()
-        composed.convert("RGB").save(buf, format="JPEG")
+        composed.convert("RGB").save(buf, format=fmt)
         result_bytes = buf.getvalue()
-        save_output(result_bytes, "jpg")
+        save_output(result_bytes, out_ext.lstrip("."))
         return Response(
             content=result_bytes,
-            media_type="image/jpeg",
-            headers={"Content-Disposition": "attachment; filename=signed.jpg"},
+            media_type=media_type,
+            headers={"Content-Disposition": f"attachment; filename=signed{out_ext}"},
         )
 
     else:
