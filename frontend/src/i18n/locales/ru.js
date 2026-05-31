@@ -11,6 +11,8 @@ export const ru = {
   'app.undo': 'Отменить',
   'app.redo': 'Повторить',
   'app.export': 'Вставить и сохранить',
+  'app.signAllPages': 'На все страницы',
+  'app.signAllPagesHint': 'Скопировать подписи текущей страницы на все',
   'app.exporting': 'Экспорт…',
   'app.loadingDoc': 'Загрузка документа…',
   'app.dropHere': 'Перетащите документ сюда',

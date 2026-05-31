@@ -1,8 +1,8 @@
 import { useCallback } from 'react'
 import { useHistory } from './useHistory'
 
-export function useCanvas() {
-  const { state: layers, push, undo, redo, canUndo, canRedo } = useHistory([])
+export function useCanvas(initialLayers = []) {
+  const { state: layers, push, undo, redo, canUndo, canRedo } = useHistory(initialLayers)
 
   const addSignature = useCallback((sig, x = 100, y = 100, width = 200, height = 80) => {
     push([...layers, {

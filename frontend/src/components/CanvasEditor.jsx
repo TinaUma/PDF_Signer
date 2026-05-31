@@ -70,9 +70,9 @@ function SignatureNode({ layer, isSelected, onSelect, onChange, imageUrl }) {
   )
 }
 
-export function CanvasEditor({ pageDataUrl, pageWidth = 794, pageHeight = 1123, imageUrl, onLayersChange, onUndoStateChange }) {
+export function CanvasEditor({ pageDataUrl, pageWidth = 794, pageHeight = 1123, imageUrl, initialLayers = [], onLayersChange, onUndoStateChange }) {
   const { t } = useI18n()
-  const { layers, addSignature, updateLayer, removeLayer, undo, redo, canUndo, canRedo } = useCanvas()
+  const { layers, addSignature, updateLayer, removeLayer, undo, redo, canUndo, canRedo } = useCanvas(initialLayers)
   const [selectedId, setSelectedId] = useState(null)
   const stageRef = useRef(null)
 

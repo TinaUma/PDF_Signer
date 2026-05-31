@@ -11,6 +11,8 @@ export const en = {
   'app.undo': 'Undo',
   'app.redo': 'Redo',
   'app.export': 'Embed & save',
+  'app.signAllPages': 'All pages',
+  'app.signAllPagesHint': 'Copy the current page signatures to every page',
   'app.exporting': 'Exporting…',
   'app.loadingDoc': 'Loading document…',
   'app.dropHere': 'Drop a document here',

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import './index.css'
 import { useDocument } from './hooks/useDocument'
 import { useSignatures } from './hooks/useSignatures'
@@ -35,12 +35,19 @@ export default function App() {
   const [uploading, setUploading] = useState(false)
   const [sigError, setSigError] = useState(null)
   const [hasSigs, setHasSigs] = useState(false)
-  const canvasLayersRef = useRef([])
+  const layersByPageRef = useRef({})  // page index -> layer[]
+  const [editorKey, setEditorKey] = useState(0)  // bump to remount the editor
   const sourceFileRef = useRef(null)
   const sigInputRef = useRef(null)
   const [undoState, setUndoState] = useState({ undo: null, redo: null, canUndo: false, canRedo: false })
 
   const handleUndoStateChange = useCallback((state) => setUndoState(state), [])
+
+  // Reset per-page layers whenever a new document is loaded.
+  useEffect(() => {
+    layersByPageRef.current = {}
+    setHasSigs(false)
+  }, [doc.fileName])
 
   const handleFileInput = (e) => {
     const f = e.target.files?.[0]
@@ -63,20 +70,44 @@ export default function App() {
   }
 
   const handleLayersChange = useCallback((layers) => {
-    canvasLayersRef.current = layers
-    setHasSigs(layers.length > 0)
-  }, [])
+    layersByPageRef.current[doc.currentPage] = layers
+    setHasSigs(Object.values(layersByPageRef.current).some((l) => l.length > 0))
+  }, [doc.currentPage])
+
+  // Copy the current page's signatures onto every page.
+  const handleSignAll = () => {
+    const cur = layersByPageRef.current[doc.currentPage] || []
+    if (cur.length === 0) return
+    for (let i = 0; i < doc.totalPages; i++) {
+      layersByPageRef.current[i] = cur.map((l) => ({ ...l, id: `${l.sigId}-p${i}-${Date.now()}` }))
+    }
+    setHasSigs(true)
+    setEditorKey((k) => k + 1)
+  }
 
   const handleExport = async () => {
     if (!sourceFileRef.current || !hasSigs) return
     setExporting(true)
     setExportError(null)
     try {
-      const layers = canvasLayersRef.current
-      const pagesPayload = [{ page_idx: doc.currentPage, stage_w: pageDims.width, stage_h: pageDims.height, jitter: jitter / 100, signatures: layers.map((l) => ({
-          id: l.sigId, x: l.x, y: l.y, w: l.width, h: l.height,
-          angle: l.rotation, opacity: l.opacity,
-        })) }]
+      const byPage = layersByPageRef.current
+      const pagesPayload = Object.keys(byPage)
+        .map(Number)
+        .filter((idx) => byPage[idx] && byPage[idx].length > 0)
+        .map((idx) => {
+          const dims = doc.pageDims[idx] || { width: 794, height: 1123 }
+          return {
+            page_idx: idx,
+            stage_w: dims.width,
+            stage_h: dims.height,
+            jitter: jitter / 100,
+            signatures: byPage[idx].map((l) => ({
+              id: l.sigId, x: l.x, y: l.y, w: l.width, h: l.height,
+              angle: l.rotation, opacity: l.opacity,
+            })),
+          }
+        })
+      if (pagesPayload.length === 0) return
 
       const form = new FormData()
       form.append('file', sourceFileRef.current)
@@ -213,6 +244,10 @@ export default function App() {
                   className="px-2 py-1 border rounded text-sm disabled:opacity-40 hover:bg-gray-100">↩ {t('app.undo')}</button>
                 <button onClick={undoState.redo} disabled={!undoState.canRedo}
                   className="px-2 py-1 border rounded text-sm disabled:opacity-40 hover:bg-gray-100">↪ {t('app.redo')}</button>
+                {doc.totalPages > 1 && (
+                  <button onClick={handleSignAll} disabled={!hasSigs} title={t('app.signAllPagesHint')}
+                    className="px-2 py-1 border rounded text-sm disabled:opacity-40 hover:bg-gray-100">{t('app.signAllPages')}</button>
+                )}
                 <button
                   onClick={handleExport}
                   disabled={!hasSigs || exporting}
@@ -246,10 +281,12 @@ export default function App() {
 
           {!doc.loading && doc.pages[doc.currentPage] && (
             <CanvasEditor
+              key={`${doc.currentPage}-${editorKey}`}
               pageDataUrl={doc.pages[doc.currentPage]}
               pageWidth={pageDims.width}
               pageHeight={pageDims.height}
               imageUrl={sigs.imageUrl}
+              initialLayers={layersByPageRef.current[doc.currentPage] || []}
               onLayersChange={handleLayersChange}
               onUndoStateChange={handleUndoStateChange}
             />

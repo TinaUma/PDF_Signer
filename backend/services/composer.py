@@ -6,17 +6,18 @@ from PIL import Image
 from services.signature_service import is_valid_sig_id
 
 
-def _jitter_params(sig_id: str, index: int, intensity: float):
+def _jitter_params(sig_id: str, index: int, intensity: float, page: int = 0):
     """Deterministic per-instance jitter so repeated placements of the same
     signature (across pages or several on one page) are not pixel-identical.
 
     Returns (d_angle_deg, scale_mult, opacity_mult, dx_px, dy_px). intensity<=0
-    yields a neutral transform. Seeded by (sig_id, index) → reproducible.
+    yields a neutral transform. Seeded by (sig_id, page, index) → reproducible
+    and distinct across pages and positions.
     """
     if intensity <= 0:
         return (0.0, 1.0, 1.0, 0, 0)
     intensity = min(intensity, 1.0)
-    h = hashlib.sha256(f"{sig_id}:{index}".encode()).digest()
+    h = hashlib.sha256(f"{sig_id}:{page}:{index}".encode()).digest()
 
     def unit(i):  # map a byte to [-1, 1]
         return (h[i] / 255.0) * 2 - 1
@@ -34,9 +35,11 @@ def compose_page(
     signatures: list[dict],
     sig_dir: Path,
     jitter: float = 0.0,
+    page_index: int = 0,
 ) -> Image.Image:
     """Overlay signatures onto a page image. Returns RGB image with white
-    background. `jitter` (0..1) applies subtle per-instance variation."""
+    background. `jitter` (0..1) applies subtle per-instance variation;
+    `page_index` makes that variation distinct across pages."""
     base = Image.new("RGB", page_img.size, (255, 255, 255))
     if page_img.mode == "RGBA":
         base.paste(page_img.convert("RGB"), mask=page_img.split()[3])
@@ -53,7 +56,7 @@ def compose_page(
             continue
 
         d_angle, scale_mult, opacity_mult, dx, dy = _jitter_params(
-            sig["id"], index, jitter
+            sig["id"], index, jitter, page_index
         )
 
         sig_img = Image.open(sig_path).convert("RGBA")

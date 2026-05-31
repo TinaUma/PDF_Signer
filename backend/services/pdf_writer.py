@@ -44,7 +44,7 @@ def export_pdf(pdf_data: bytes, pages_payload: list[dict]) -> bytes:
                 for s in page_map[i]
             ]
             composed = compose_page(
-                img, scaled_sigs, sig_dir, jitter=jitter_map.get(i, 0)
+                img, scaled_sigs, sig_dir, jitter=jitter_map.get(i, 0), page_index=i
             )
 
             buf = io.BytesIO()

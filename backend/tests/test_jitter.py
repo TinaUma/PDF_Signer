@@ -19,6 +19,11 @@ def test_different_instances_differ():
     assert _jitter_params(SIG, 0, 0.7) != _jitter_params(SIG, 1, 0.7)
 
 
+def test_same_index_different_page_differ():
+    # Same signature at the same position on different pages must differ too.
+    assert _jitter_params(SIG, 0, 0.7, page=0) != _jitter_params(SIG, 0, 0.7, page=1)
+
+
 def test_bounds_scale_with_intensity():
     d_angle, scale_mult, opacity_mult, dx, dy = _jitter_params(SIG, 0, 1.0)
     assert abs(d_angle) <= 2.5
