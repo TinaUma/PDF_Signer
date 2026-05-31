@@ -35,6 +35,7 @@ export default function App() {
   const [uploading, setUploading] = useState(false)
   const [sigError, setSigError] = useState(null)
   const [hasSigs, setHasSigs] = useState(false)
+  const [deletedPages, setDeletedPages] = useState(() => new Set())  // pages excluded from export
   const layersByPageRef = useRef({})  // page index -> layer[]
   const [editorKey, setEditorKey] = useState(0)  // bump to remount the editor
   const sourceFileRef = useRef(null)
@@ -47,7 +48,17 @@ export default function App() {
   useEffect(() => {
     layersByPageRef.current = {}
     setHasSigs(false)
+    setDeletedPages(new Set())
   }, [doc.fileName])
+
+  const toggleDeletePage = () => {
+    setDeletedPages((prev) => {
+      const next = new Set(prev)
+      if (next.has(doc.currentPage)) next.delete(doc.currentPage)
+      else next.add(doc.currentPage)
+      return next
+    })
+  }
 
   const handleFileInput = (e) => {
     const f = e.target.files?.[0]
@@ -86,14 +97,19 @@ export default function App() {
   }
 
   const handleExport = async () => {
-    if (!sourceFileRef.current || !hasSigs) return
+    if (!sourceFileRef.current) return
+    if (!hasSigs && deletedPages.size === 0) return
+    if (doc.totalPages > 0 && deletedPages.size >= doc.totalPages) {
+      setExportError(t('error.all_pages_deleted'))
+      return
+    }
     setExporting(true)
     setExportError(null)
     try {
       const byPage = layersByPageRef.current
       const pagesPayload = Object.keys(byPage)
         .map(Number)
-        .filter((idx) => byPage[idx] && byPage[idx].length > 0)
+        .filter((idx) => byPage[idx] && byPage[idx].length > 0 && !deletedPages.has(idx))
         .map((idx) => {
           const dims = doc.pageDims[idx] || { width: 794, height: 1123 }
           return {
@@ -107,11 +123,12 @@ export default function App() {
             })),
           }
         })
-      if (pagesPayload.length === 0) return
+      if (pagesPayload.length === 0 && deletedPages.size === 0) return
 
       const form = new FormData()
       form.append('file', sourceFileRef.current)
       form.append('pages', JSON.stringify(pagesPayload))
+      form.append('delete_pages', JSON.stringify([...deletedPages]))
 
       const res = await fetch('/api/export', { method: 'POST', body: form })
       if (!res.ok) {
@@ -248,10 +265,16 @@ export default function App() {
                   <button onClick={handleSignAll} disabled={!hasSigs} title={t('app.signAllPagesHint')}
                     className="px-2 py-1 border rounded text-sm disabled:opacity-40 hover:bg-gray-100">{t('app.signAllPages')}</button>
                 )}
+                {doc.totalPages > 1 && (
+                  <button onClick={toggleDeletePage} title={t('app.deletePageHint')}
+                    className={`px-2 py-1 border rounded text-sm hover:bg-gray-100 ${deletedPages.has(doc.currentPage) ? 'text-green-600 border-green-300' : 'text-red-500 border-red-200'}`}>
+                    {deletedPages.has(doc.currentPage) ? t('app.restorePage') : t('app.deletePage')}
+                  </button>
+                )}
                 <button
                   onClick={handleExport}
-                  disabled={!hasSigs || exporting}
-                  className={`px-3 py-1 rounded text-sm transition-colors ${hasSigs && !exporting ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+                  disabled={(!hasSigs && deletedPages.size === 0) || exporting}
+                  className={`px-3 py-1 rounded text-sm transition-colors ${(hasSigs || deletedPages.size > 0) && !exporting ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
                 >
                   {exporting ? t('app.exporting') : `💾 ${t('app.export')}`}
                 </button>
@@ -265,6 +288,9 @@ export default function App() {
 
         {exportError && (
           <div className="bg-red-50 border-b border-red-200 px-4 py-2 text-red-600 text-sm">{exportError}</div>
+        )}
+        {docLoaded && deletedPages.has(doc.currentPage) && (
+          <div className="bg-amber-50 border-b border-amber-200 px-4 py-1.5 text-amber-700 text-sm">{t('app.pageDeleted')}</div>
         )}
 
         {/* Main area */}

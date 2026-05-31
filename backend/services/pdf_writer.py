@@ -11,12 +11,16 @@ from services.pdf_service import ensure_render_safe
 from services.signature_service import get_signatures_dir
 
 
-def export_pdf(pdf_data: bytes, pages_payload: list[dict]) -> bytes:
-    """Burn signatures into PDF pages, return new PDF bytes."""
+def export_pdf(
+    pdf_data: bytes, pages_payload: list[dict], delete_pages: list[int] | None = None
+) -> bytes:
+    """Burn signatures into PDF pages, return new PDF bytes. Pages whose original
+    index is in `delete_pages` are omitted from the output."""
     src = fitz.open(stream=pdf_data, filetype="pdf")
     ensure_render_safe(src)  # defense-in-depth: cap pages / pixmap area
     out = fitz.open()
     sig_dir = get_signatures_dir()
+    delete_set = set(delete_pages or [])
 
     page_map = {p["page_idx"]: p["signatures"] for p in pages_payload}
 
@@ -27,6 +31,8 @@ def export_pdf(pdf_data: bytes, pages_payload: list[dict]) -> bytes:
     jitter_map = {p["page_idx"]: p.get("jitter", 0) for p in pages_payload}
 
     for i, page in enumerate(src):
+        if i in delete_set:
+            continue  # page removed from the exported document
         if i in page_map and page_map[i]:
             pix = page.get_pixmap(dpi=200)
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)

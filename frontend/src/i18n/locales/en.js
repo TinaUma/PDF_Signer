@@ -13,6 +13,10 @@ export const en = {
   'app.export': 'Embed & save',
   'app.signAllPages': 'All pages',
   'app.signAllPagesHint': 'Copy the current page signatures to every page',
+  'app.deletePage': '🗑 Delete page',
+  'app.restorePage': '↺ Restore page',
+  'app.deletePageHint': 'Exclude the current page from the exported PDF',
+  'app.pageDeleted': 'Page excluded from export — click “Restore page” to undo',
   'app.exporting': 'Exporting…',
   'app.loadingDoc': 'Loading document…',
   'app.dropHere': 'Drop a document here',
@@ -53,4 +57,5 @@ export const en = {
     'No signature detected. Use a clearer image or turn off background removal.',
   'error.unsupported_signature_format': 'Unsupported signature format.',
   'error.signature_not_found': 'Signature not found.',
+  'error.all_pages_deleted': 'You cannot delete every page of the document.',
 }

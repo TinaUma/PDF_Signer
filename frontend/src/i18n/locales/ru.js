@@ -13,6 +13,10 @@ export const ru = {
   'app.export': 'Вставить и сохранить',
   'app.signAllPages': 'На все страницы',
   'app.signAllPagesHint': 'Скопировать подписи текущей страницы на все',
+  'app.deletePage': '🗑 Удалить лист',
+  'app.restorePage': '↺ Вернуть лист',
+  'app.deletePageHint': 'Исключить текущий лист из итогового PDF',
+  'app.pageDeleted': 'Лист исключён из экспорта — нажмите «Вернуть лист», чтобы отменить',
   'app.exporting': 'Экспорт…',
   'app.loadingDoc': 'Загрузка документа…',
   'app.dropHere': 'Перетащите документ сюда',
@@ -53,4 +57,5 @@ export const ru = {
     'Подпись не распознана. Используйте более контрастное изображение или отключите удаление фона.',
   'error.unsupported_signature_format': 'Неподдерживаемый формат подписи.',
   'error.signature_not_found': 'Подпись не найдена.',
+  'error.all_pages_deleted': 'Нельзя удалить все страницы документа.',
 }

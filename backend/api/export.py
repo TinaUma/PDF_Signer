@@ -73,11 +73,14 @@ def _validate_signatures(sigs: list[dict], page_w: float, page_h: float):
 async def export_document(
     file: UploadFile = File(...),
     pages: str = Form(...),
+    delete_pages: str = Form("[]"),
 ):
     try:
         pages_payload = json.loads(pages)
+        delete_list = json.loads(delete_pages)
     except (json.JSONDecodeError, ValueError):
         raise ApiError("invalid_pages_payload", "Invalid pages payload.")
+    delete_list = [int(i) for i in delete_list if isinstance(i, (int, float))]
     data = await file.read()
     if len(data) > pdf_service.MAX_FILE_SIZE:
         raise ApiError("file_too_large", "File exceeds the size limit.", 413)
@@ -118,7 +121,7 @@ async def export_document(
         finally:
             doc.close()
 
-        result_bytes = export_pdf(data, pages_payload)
+        result_bytes = export_pdf(data, pages_payload, delete_pages=delete_list)
         save_output(result_bytes, "pdf")
         return Response(
             content=result_bytes,
