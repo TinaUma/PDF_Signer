@@ -1,5 +1,6 @@
 import io
 import os
+import uuid
 from datetime import datetime
 from pathlib import Path
 
@@ -80,6 +81,7 @@ def save_output(data: bytes, ext: str = "pdf") -> Path:
     data_dir = Path(os.environ.get("DATA_DIR", "./data")) / "output"
     data_dir.mkdir(parents=True, exist_ok=True)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    path = data_dir / f"signed_{ts}.{ext}"
+    # uuid suffix avoids collisions/overwrites for exports within the same second.
+    path = data_dir / f"signed_{ts}_{uuid.uuid4().hex[:8]}.{ext}"
     path.write_bytes(data)
     return path

@@ -55,6 +55,32 @@ def _check_aspect(stage_w: float, stage_h: float, page_w: float, page_h: float):
         )
 
 
+def _is_number(v) -> bool:
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+def _validate_payload_shape(pages_payload):
+    """Reject a malformed `pages` payload up front so downstream field access
+    can't raise KeyError/TypeError (which would surface as 500). Returns 422."""
+    if not isinstance(pages_payload, list):
+        raise ApiError("invalid_pages_payload", "Invalid pages payload.")
+    for p in pages_payload:
+        if (
+            not isinstance(p, dict)
+            or not isinstance(p.get("page_idx"), int)
+            or isinstance(p.get("page_idx"), bool)
+        ):
+            raise ApiError("invalid_pages_payload", "Invalid pages payload.")
+        sigs = p.get("signatures", [])
+        if not isinstance(sigs, list):
+            raise ApiError("invalid_pages_payload", "Invalid pages payload.")
+        for s in sigs:
+            if not isinstance(s, dict) or not all(
+                _is_number(s.get(k)) for k in ("x", "y", "w", "h")
+            ):
+                raise ApiError("invalid_pages_payload", "Invalid pages payload.")
+
+
 def _validate_signatures(sigs: list[dict], page_w: float, page_h: float):
     for s in sigs:
         if (
@@ -86,6 +112,7 @@ async def export_document(
         for i in delete_list
         if isinstance(i, int) and not isinstance(i, bool) and i >= 0
     ]
+    _validate_payload_shape(pages_payload)
     data = await file.read()
     if len(data) > pdf_service.MAX_FILE_SIZE:
         raise ApiError("file_too_large", "File exceeds the size limit.", 413)
