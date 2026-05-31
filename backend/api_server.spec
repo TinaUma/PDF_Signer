@@ -11,10 +11,7 @@ a = Analysis(
     ['main.py'],
     pathex=[str(Path(__file__).parent)],
     binaries=[],
-    datas=[
-        # Bundle rembg U2Net model
-        (str(Path.home() / '.u2net'), '.u2net'),
-    ],
+    datas=[],
     hiddenimports=[
         'uvicorn.logging',
         'uvicorn.loops',
@@ -26,8 +23,6 @@ a = Analysis(
         'uvicorn.protocols.websockets.auto',
         'uvicorn.lifespan',
         'uvicorn.lifespan.on',
-        'rembg',
-        'onnxruntime',
     ],
     hookspath=[],
     runtime_hooks=[],

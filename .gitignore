@@ -21,6 +21,9 @@ data/output/
 
 # Tauri build artifacts
 src-tauri/target/
+src-tauri/gen/
+src-tauri/binaries/
+src-tauri/icons/
 
 # OS
 .DS_Store
