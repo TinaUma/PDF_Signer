@@ -79,6 +79,7 @@ docker compose up
 
 > 🖥️ Нативная сборка (Tauri) пока экспериментальная — упаковка не завершена, используйте Docker.
 > 📄 Техническое задание: [docs/PDF_Signer_TZ_v1.0.pdf](docs/PDF_Signer_TZ_v1.0.pdf)
+> 🛠 Руководство разработчика: [docs/DEVELOPMENT.ru.md](docs/DEVELOPMENT.ru.md)
 
 ### Как пользоваться
 
