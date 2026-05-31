@@ -69,6 +69,7 @@ def _validate_payload_shape(pages_payload):
             not isinstance(p, dict)
             or not isinstance(p.get("page_idx"), int)
             or isinstance(p.get("page_idx"), bool)
+            or p["page_idx"] < 0
         ):
             raise ApiError("invalid_pages_payload", "Invalid pages payload.")
         sigs = p.get("signatures", [])
@@ -106,6 +107,8 @@ async def export_document(
         pages_payload = json.loads(pages)
         delete_list = json.loads(delete_pages)
     except (json.JSONDecodeError, ValueError):
+        raise ApiError("invalid_pages_payload", "Invalid pages payload.")
+    if not isinstance(delete_list, list):
         raise ApiError("invalid_pages_payload", "Invalid pages payload.")
     delete_list = [
         i

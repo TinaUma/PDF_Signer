@@ -73,6 +73,37 @@ def test_pdf_export_rejects_mismatched_stage_aspect(client, make_pdf):
     assert r.status_code == 422
 
 
+def test_delete_pages_scalar_returns_422(client, make_pdf):
+    for bad in ("5", "true", "null"):
+        r = client.post(
+            "/api/export",
+            files={"file": ("doc.pdf", make_pdf(), "application/pdf")},
+            data={"pages": json.dumps([]), "delete_pages": bad},
+        )
+        assert r.status_code == 422, bad
+        assert r.json()["detail"]["code"] == "invalid_pages_payload"
+
+
+def test_negative_page_idx_returns_422(client, make_pdf):
+    payload = json.dumps(
+        [
+            {
+                "page_idx": -1,
+                "stage_w": 794,
+                "stage_h": 1123,
+                "signatures": [{"id": _VALID_UUID, "x": 1, "y": 1, "w": 5, "h": 5}],
+            }
+        ]
+    )
+    r = client.post(
+        "/api/export",
+        files={"file": ("doc.pdf", make_pdf(), "application/pdf")},
+        data={"pages": payload},
+    )
+    assert r.status_code == 422
+    assert r.json()["detail"]["code"] == "invalid_pages_payload"
+
+
 def test_pages_not_list_returns_422(client, make_pdf):
     r = client.post(
         "/api/export",
