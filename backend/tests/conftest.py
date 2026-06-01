@@ -39,3 +39,24 @@ def make_pdf():
         return data
 
     return _make
+
+
+@pytest.fixture
+def make_image():
+    """Factory: build an in-memory PNG with a dark ink mark on white paper, so
+    background removal finds ink and the upload succeeds."""
+    import io
+
+    from PIL import Image, ImageDraw
+
+    def _make(width=120, height=60):
+        img = Image.new("RGB", (width, height), (255, 255, 255))
+        ImageDraw.Draw(img).rectangle(
+            [width // 3, height // 3, 2 * width // 3, 2 * height // 3],
+            fill=(10, 10, 10),
+        )
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        return buf.getvalue()
+
+    return _make

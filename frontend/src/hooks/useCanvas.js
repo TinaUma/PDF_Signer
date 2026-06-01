@@ -14,6 +14,7 @@ export function useCanvas(initialLayers = []) {
       height: Math.max(MIN_LAYER_SIZE, height),
       rotation: 0,
       opacity: 1,
+      jitter: 0,  // 0..1 — per-instance uniquification, set in the properties panel
     }])
   }, [layers, push])
 

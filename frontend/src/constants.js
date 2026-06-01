@@ -1,5 +1,14 @@
 import { invoke } from '@tauri-apps/api/core'
 
+// App version, injected at build time from package.json via Vite `define`
+// (see vite.config.js). Falls back to 'dev' when the define is absent (e.g. a
+// raw test runner without the config). Shown in the About dialog.
+export const APP_VERSION =
+  typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev'
+
+// Public source repository — linked from the About dialog.
+export const GITHUB_URL = 'https://github.com/TinaUma/PDF_Signer'
+
 // A4 @ ~96dpi — fallback stage size when a page's real pixel size is unknown.
 // Mirrors backend/constants.py (STAGE_FALLBACK_W/H); keep both in sync.
 export const FALLBACK_DIMS = { width: 794, height: 1123 }

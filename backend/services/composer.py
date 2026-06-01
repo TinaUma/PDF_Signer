@@ -38,8 +38,10 @@ def compose_page(
     page_index: int = 0,
 ) -> Image.Image:
     """Overlay signatures onto a page image. Returns RGB image with white
-    background. `jitter` (0..1) applies subtle per-instance variation;
-    `page_index` makes that variation distinct across pages."""
+    background. Uniquification is per signature: each sig may carry its own
+    `jitter` (0..1); the `jitter` argument is only the fallback for signatures
+    that don't specify one. `page_index` makes the variation distinct across
+    pages."""
     base = Image.new("RGB", page_img.size, (255, 255, 255))
     if page_img.mode == "RGBA":
         base.paste(page_img.convert("RGB"), mask=page_img.split()[3])
@@ -55,8 +57,15 @@ def compose_page(
         if not sig_path.exists():
             continue
 
+        # Per-instance uniquification: prefer the signature's own jitter, falling
+        # back to the page-level value. Coerce defensively — a non-numeric value
+        # from the payload must not raise (it would become an HTTP 500).
+        try:
+            intensity = float(sig.get("jitter", jitter))
+        except (TypeError, ValueError):
+            intensity = 0.0
         d_angle, scale_mult, opacity_mult, dx, dy = _jitter_params(
-            sig["id"], index, jitter, page_index
+            sig["id"], index, intensity, page_index
         )
 
         sig_img = Image.open(sig_path).convert("RGBA")

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, Query
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 
 from errors import ApiError, DomainError
 from services import pdf_service
@@ -8,9 +9,14 @@ from services.signature_service import (
     save_signature,
     delete_signature,
     get_signature_path,
+    rename_signature,
 )
 
 router = APIRouter(prefix="/api/signatures", tags=["signatures"])
+
+
+class RenameRequest(BaseModel):
+    name: str
 
 
 @router.get("")
@@ -39,6 +45,17 @@ def get_signature_image(sig_id: str):
     if not path:
         raise ApiError("signature_not_found", "Signature not found", 404)
     return FileResponse(path, media_type="image/png")
+
+
+@router.patch("/{sig_id}")
+def patch_signature(sig_id: str, body: RenameRequest):
+    # rename_signature returns the canonical stored name (cleaned) or None when
+    # the id is unknown/invalid. Echo the stored value so the client matches a
+    # subsequent GET /api/signatures (no flicker from trim vs. clean differences).
+    cleaned = rename_signature(sig_id, body.name)
+    if cleaned is None:
+        raise ApiError("signature_not_found", "Signature not found", 404)
+    return {"id": sig_id, "name": cleaned}
 
 
 @router.delete("/{sig_id}")

@@ -2,22 +2,17 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import './index.css'
 import { useDocument } from './hooks/useDocument'
 import { useSignatures } from './hooks/useSignatures'
+import { useSigningHistory } from './hooks/useSigningHistory'
 import { CanvasEditor } from './components/CanvasEditor'
+import { SignatureItem } from './components/SignatureItem'
+import { AboutModal } from './components/AboutModal'
+import { HistoryModal } from './components/HistoryModal'
 import { LanguageSwitcher } from './i18n/LanguageSwitcher'
 import { useI18n, resolveApiError } from './i18n/index.jsx'
 import { FALLBACK_DIMS, getApiBase } from './constants'
 import { buildExportPayload, signAllPages } from './lib/exportPayload'
 
 const ALLOWED = '.pdf,.jpg,.jpeg,.png,.tiff,.tif,.webp'
-
-const CHECKER = {
-  backgroundImage: `linear-gradient(45deg,#ccc 25%,transparent 25%),
-    linear-gradient(-45deg,#ccc 25%,transparent 25%),
-    linear-gradient(45deg,transparent 75%,#ccc 75%),
-    linear-gradient(-45deg,transparent 75%,#ccc 75%)`,
-  backgroundSize: '8px 8px',
-  backgroundPosition: '0 0,0 4px,4px -4px,-4px 0',
-}
 
 const STEPS = [
   { n: 1, key: 'steps.open' },
@@ -30,15 +25,23 @@ export default function App() {
   const { t } = useI18n()
   const doc = useDocument()
   const sigs = useSignatures()
+  const history = useSigningHistory()
   const [exporting, setExporting] = useState(false)
   const [exportError, setExportError] = useState(null)
   const [removeBg, setRemoveBg] = useState(true)
-  const [jitter, setJitter] = useState(0)  // 0..100 — signature uniquification
   const [uploading, setUploading] = useState(false)
   const [sigError, setSigError] = useState(null)
   const [hasSigs, setHasSigs] = useState(false)
   const [deletedPages, setDeletedPages] = useState(() => new Set())  // pages excluded from export
+  const [selectedSigs, setSelectedSigs] = useState(() => new Set())  // library multi-select
+  const [showAbout, setShowAbout] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
   const layersByPageRef = useRef({})  // page index -> layer[]
+  // Reopening a history entry must restore its layers AFTER the new document
+  // loads (the load resets the per-page store). These refs carry the restored
+  // state into the load-reset effect below.
+  const pendingLayersRef = useRef(null)
+  const pendingDeletedRef = useRef(null)
   const [editorKey, setEditorKey] = useState(0)  // bump to remount the editor
   const sourceFileRef = useRef(null)
   const sigInputRef = useRef(null)
@@ -46,11 +49,27 @@ export default function App() {
 
   const handleUndoStateChange = useCallback((state) => setUndoState(state), [])
 
-  // Reset per-page layers whenever a new document is loaded.
+  // Reset per-page layers whenever a new document is loaded. If a reopen is
+  // pending (from history), restore that layout instead of starting blank.
   useEffect(() => {
-    layersByPageRef.current = {}
-    setHasSigs(false)
-    setDeletedPages(new Set())
+    const pending = pendingLayersRef.current
+    if (pending) {
+      pendingLayersRef.current = null
+      const del = pendingDeletedRef.current || new Set()
+      pendingDeletedRef.current = null
+      layersByPageRef.current = pending
+      setDeletedPages(del)
+      setHasSigs(
+        Object.entries(pending).some(
+          ([idx, l]) => l.length > 0 && !del.has(Number(idx)),
+        ),
+      )
+    } else {
+      layersByPageRef.current = {}
+      setHasSigs(false)
+      setDeletedPages(new Set())
+    }
+    setEditorKey((k) => k + 1)
   }, [doc.loadId])
 
   const toggleDeletePage = () => {
@@ -61,15 +80,23 @@ export default function App() {
     recomputeHasSigs(next)  // a deleted page must not count toward "ready to export"
   }
 
+  // A manually-opened document must never inherit a history reopen's layout —
+  // clear any pending restore so a failed reopen (which wouldn't bump loadId)
+  // can't leak its layers onto the next document the user opens.
+  const clearPendingReopen = () => {
+    pendingLayersRef.current = null
+    pendingDeletedRef.current = null
+  }
+
   const handleFileInput = (e) => {
     const f = e.target.files?.[0]
-    if (f) { sourceFileRef.current = f; doc.loadFile(f) }
+    if (f) { clearPendingReopen(); sourceFileRef.current = f; doc.loadFile(f) }
   }
   const handleDrop = (e) => {
     e.preventDefault()
     if (e.dataTransfer.types.includes('application/signature')) return
     const f = e.dataTransfer?.files?.[0]
-    if (f) { sourceFileRef.current = f; doc.loadFile(f) }
+    if (f) { clearPendingReopen(); sourceFileRef.current = f; doc.loadFile(f) }
   }
 
   const handleSigUpload = async (e) => {
@@ -103,6 +130,51 @@ export default function App() {
     setEditorKey((k) => k + 1)
   }
 
+  // --- Signature library multi-select ---
+  const toggleSelectSig = useCallback((id) => {
+    setSelectedSigs((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }, [])
+
+  const deleteSelectedSigs = async () => {
+    const ids = [...selectedSigs]
+    if (ids.length === 0) return
+    await sigs.removeMany(ids)
+    setSelectedSigs(new Set())
+  }
+
+  // Reopen a past export for editing: fetch its original bytes + restore the
+  // placed-signature layout, then load it as the current document. The layer
+  // restore happens in the load-reset effect via pendingLayersRef.
+  const handleReopen = useCallback(async (entryId) => {
+    try {
+      const meta = await history.getEntry(entryId)
+      const res = await fetch(`${getApiBase()}/api/history/${entryId}/original`)
+      if (!res.ok) throw new Error(t('error.history_load_failed'))
+      const blob = await res.blob()
+      const file = new File([blob], meta.filename || 'document', { type: blob.type })
+      const layers = {}
+      for (const p of meta.pages || []) {
+        layers[p.page_idx] = (p.signatures || []).map((s, i) => ({
+          id: `${s.id}-h${p.page_idx}-${i}`,
+          sigId: s.id,
+          x: s.x, y: s.y, width: s.w, height: s.h,
+          rotation: s.angle ?? 0, opacity: s.opacity ?? 1, jitter: s.jitter ?? 0,
+        }))
+      }
+      pendingLayersRef.current = layers
+      pendingDeletedRef.current = new Set(meta.delete_pages || [])
+      sourceFileRef.current = file
+      setShowHistory(false)
+      doc.loadFile(file)
+    } catch (e) {
+      setExportError(e.message)
+    }
+  }, [history, doc, t])
+
   const handleExport = async () => {
     if (!sourceFileRef.current) return
     if (!hasSigs && deletedPages.size === 0) return
@@ -117,7 +189,6 @@ export default function App() {
         layersByPage: layersByPageRef.current,
         pageDims: doc.pageDims,
         deletedPages,
-        jitter,
       })
       if (pagesPayload.length === 0 && deletedPages.size === 0) return
 
@@ -142,6 +213,8 @@ export default function App() {
       a.click()
       // Defer revoke so the download isn't cancelled in some browsers.
       setTimeout(() => URL.revokeObjectURL(url), 1000)
+      // The export persisted a history entry server-side — refresh the list.
+      history.reload()
     } catch (e) {
       setExportError(e.message)
     } finally {
@@ -187,15 +260,6 @@ export default function App() {
               {t('app.removeBg')}
             </span>
           </label>
-
-          <label className="flex flex-col gap-0.5 mt-2" title={t('app.uniquifyHint')}>
-            <span className={jitter > 0 ? 'text-blue-600 font-medium' : 'text-gray-400'}>
-              {t('app.uniquify')} {jitter > 0 ? `${jitter}%` : ''}
-            </span>
-            <input type="range" min={0} max={100} value={jitter}
-              onChange={(e) => setJitter(Number(e.target.value))}
-              className="w-full" />
-          </label>
         </div>
 
         {/* Upload button */}
@@ -211,24 +275,34 @@ export default function App() {
           {sigError && <p className="text-red-500 mt-1">{sigError}</p>}
         </div>
 
+        {/* Bulk-select bar — shown when one or more signatures are checked */}
+        {selectedSigs.size > 0 && (
+          <div className="flex items-center gap-2 px-3 py-1.5 border-t bg-blue-50 text-blue-700">
+            <span className="flex-1">{t('app.selectedCount', { n: selectedSigs.size })}</span>
+            <button onClick={() => setSelectedSigs(new Set())} className="px-1 hover:underline">
+              {t('app.clearSelection')}
+            </button>
+            <button onClick={deleteSelectedSigs} className="px-2 py-0.5 rounded border border-red-200 text-red-500 hover:bg-red-100">
+              {t('app.deleteSelected')}
+            </button>
+          </div>
+        )}
+
         {/* Signatures list */}
         <div className="flex-1 overflow-y-auto border-t">
           {sigs.error && (
             <p className="px-3 py-2 text-red-500">{sigs.error}</p>
           )}
           {sigs.signatures.map((sig) => (
-            <div key={sig.id}
-              draggable
-              onDragStart={(e) => e.dataTransfer.setData('application/signature', JSON.stringify(sig))}
-              title={t('app.dragToDoc')}
-              className="flex items-center gap-2 px-2 py-1.5 hover:bg-blue-50 cursor-grab group"
-            >
-              <div style={CHECKER} className="w-14 h-8 rounded flex-shrink-0 flex items-center justify-center">
-                <img src={sigs.imageUrl(sig.id)} alt="" className="w-14 h-8 object-contain" />
-              </div>
-              <span className="flex-1 text-gray-400 truncate">{sig.id.slice(0, 6)}…</span>
-              <button onClick={() => sigs.remove(sig.id)} className="text-red-400 opacity-0 group-hover:opacity-100 px-1">✕</button>
-            </div>
+            <SignatureItem
+              key={sig.id}
+              sig={sig}
+              imageUrl={sigs.imageUrl}
+              onRename={sigs.rename}
+              onRemove={sigs.remove}
+              selected={selectedSigs.has(sig.id)}
+              onToggleSelect={toggleSelectSig}
+            />
           ))}
           {!sigs.loading && sigs.signatures.length === 0 && (
             <p className="px-3 py-2 text-gray-400 italic">{t('app.noSignatures')}</p>
@@ -252,9 +326,17 @@ export default function App() {
               <div className="flex items-center gap-1 ml-auto">
                 <button onClick={() => doc.goTo(doc.currentPage - 1)} disabled={doc.currentPage === 0}
                   className="px-2 py-1 border rounded disabled:opacity-40 hover:bg-gray-100">‹</button>
-                <span className="text-xs px-2">{doc.currentPage + 1} / {doc.totalPages}</span>
+                <span className={`text-xs px-2 ${deletedPages.has(doc.currentPage) ? 'text-red-500 line-through' : ''}`}>
+                  {doc.currentPage + 1} / {doc.totalPages}
+                </span>
                 <button onClick={() => doc.goTo(doc.currentPage + 1)} disabled={doc.currentPage === doc.totalPages - 1}
                   className="px-2 py-1 border rounded disabled:opacity-40 hover:bg-gray-100">›</button>
+                {deletedPages.size > 0 && (
+                  <span title={t('app.excludedHint')}
+                    className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                    {t('app.excludedCount', { n: deletedPages.size })}
+                  </span>
+                )}
               </div>
               <div className="flex gap-2 ml-4">
                 <button onClick={undoState.undo} disabled={!undoState.canUndo}
@@ -266,7 +348,8 @@ export default function App() {
                     className="px-2 py-1 border rounded text-sm disabled:opacity-40 hover:bg-gray-100">{t('app.signAllPages')}</button>
                 )}
                 {doc.totalPages > 1 && (
-                  <button onClick={toggleDeletePage} title={t('app.deletePageHint')}
+                  <button onClick={toggleDeletePage}
+                    title={deletedPages.has(doc.currentPage) ? t('app.restorePageHint') : t('app.deletePageHint')}
                     className={`px-2 py-1 border rounded text-sm hover:bg-gray-100 ${deletedPages.has(doc.currentPage) ? 'text-green-600 border-green-300' : 'text-red-500 border-red-200'}`}>
                     {deletedPages.has(doc.currentPage) ? t('app.restorePage') : t('app.deletePage')}
                   </button>
@@ -281,7 +364,28 @@ export default function App() {
               </div>
             </>
           )}
-          <div className={docLoaded ? 'ml-2' : 'ml-auto'}>
+          <div className={`flex items-center gap-2 ${docLoaded ? 'ml-2' : 'ml-auto'}`}>
+            <button
+              onClick={() => setShowHistory(true)}
+              title={t('history.title')}
+              aria-label={t('history.title')}
+              className="relative w-7 h-7 rounded-full border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-blue-600 flex items-center justify-center"
+            >
+              🕑
+              {history.entries.length > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-blue-600 text-white text-[9px] leading-4 text-center">
+                  {history.entries.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setShowAbout(true)}
+              title={t('about.title')}
+              aria-label={t('about.title')}
+              className="w-7 h-7 rounded-full border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-blue-600 flex items-center justify-center font-semibold"
+            >
+              ?
+            </button>
             <LanguageSwitcher />
           </div>
         </header>
@@ -306,19 +410,35 @@ export default function App() {
           )}
 
           {!doc.loading && doc.pages[doc.currentPage] && (
-            <CanvasEditor
-              key={`${doc.currentPage}-${editorKey}`}
-              pageDataUrl={doc.pages[doc.currentPage]}
-              pageWidth={pageDims.width}
-              pageHeight={pageDims.height}
-              imageUrl={sigs.imageUrl}
-              initialLayers={layersByPageRef.current[doc.currentPage] || []}
-              onLayersChange={handleLayersChange}
-              onUndoStateChange={handleUndoStateChange}
-            />
+            <div className="relative">
+              <CanvasEditor
+                key={`${doc.currentPage}-${editorKey}`}
+                pageDataUrl={doc.pages[doc.currentPage]}
+                pageWidth={pageDims.width}
+                pageHeight={pageDims.height}
+                imageUrl={sigs.imageUrl}
+                initialLayers={layersByPageRef.current[doc.currentPage] || []}
+                onLayersChange={handleLayersChange}
+                onUndoStateChange={handleUndoStateChange}
+              />
+              {deletedPages.has(doc.currentPage) && (
+                // Visual veil marking the page as excluded from export. Pointer
+                // events pass through so the user can still inspect/adjust.
+                <div className="absolute inset-0 bg-gray-500/25 flex items-start justify-center pt-10 pointer-events-none">
+                  <span className="bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded shadow">
+                    {t('app.pageExcludedStamp')}
+                  </span>
+                </div>
+              )}
+            </div>
           )}
         </main>
       </div>
+
+      {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
+      {showHistory && (
+        <HistoryModal history={history} onReopen={handleReopen} onClose={() => setShowHistory(false)} />
+      )}
     </div>
   )
 }

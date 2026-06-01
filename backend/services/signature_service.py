@@ -1,5 +1,8 @@
 import io
+import json
+import os
 import re
+import threading
 import uuid
 from pathlib import Path
 
@@ -15,6 +18,9 @@ SUPPORTED_EXTS = {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".webp"}
 
 # Ink/paper separation knob: keep pixels darker than the paper by this much.
 DARKNESS_THRESHOLD = 35
+
+# Max length of a user-facing signature display name (defensive cap).
+MAX_NAME_LEN = 80
 
 _UUID_RE = re.compile(
     r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
@@ -91,12 +97,87 @@ def get_signatures_dir() -> Path:
     return d
 
 
+# --- Display-name metadata --------------------------------------------------
+# User-facing names live in a single meta.json (id -> {"name": ...}) next to the
+# PNGs, keeping signatures themselves untouched and the store trivially portable
+# (Docker volume / Tauri app_data_dir). A missing/corrupt file degrades to "no
+# names" rather than failing the listing.
+
+
+# Sync endpoints run in FastAPI's threadpool, so a multi-delete fires concurrent
+# read-modify-write cycles on the shared meta.json. Serialize them with a lock and
+# write atomically (temp + os.replace) so a delete can't be lost and a reader can
+# never see a half-written file.
+_META_LOCK = threading.Lock()
+
+
+def _meta_path() -> Path:
+    return get_signatures_dir() / "meta.json"
+
+
+def _load_meta() -> dict:
+    path = _meta_path()
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
+def _save_meta(meta: dict) -> None:
+    path = _meta_path()
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
+    os.replace(tmp, path)
+
+
+def _clean_name(name: str) -> str:
+    """Trim, collapse whitespace, and cap length. Empty after cleaning -> ''."""
+    cleaned = " ".join(str(name).split()).strip()
+    return cleaned[:MAX_NAME_LEN]
+
+
+def _name_for(meta: dict, sig_id: str) -> str:
+    entry = meta.get(sig_id)
+    return entry.get("name", "") if isinstance(entry, dict) else ""
+
+
 def list_signatures() -> list[dict]:
     d = get_signatures_dir()
+    meta = _load_meta()
     result = []
     for f in sorted(d.glob("*.png")):
-        result.append({"id": f.stem, "filename": f.name, "size": f.stat().st_size})
+        sid = f.stem
+        result.append(
+            {
+                "id": sid,
+                "filename": f.name,
+                "size": f.stat().st_size,
+                "name": _name_for(meta, sid),
+            }
+        )
     return result
+
+
+def rename_signature(sig_id: str, name: str) -> str | None:
+    """Set a signature's display name. Returns the cleaned name that was stored
+    (possibly empty), or None for an unknown/invalid id."""
+    if not is_valid_sig_id(sig_id):
+        return None
+    if not (get_signatures_dir() / f"{sig_id}.png").exists():
+        return None
+    cleaned = _clean_name(name)
+    with _META_LOCK:
+        meta = _load_meta()
+        entry = meta.get(sig_id)
+        if not isinstance(entry, dict):
+            entry = {}
+        entry["name"] = cleaned
+        meta[sig_id] = entry
+        _save_meta(meta)
+    return cleaned
 
 
 def save_signature(filename: str, data: bytes, remove_bg: bool = True) -> dict:
@@ -118,7 +199,21 @@ def save_signature(filename: str, data: bytes, remove_bg: bool = True) -> dict:
     out_path = get_signatures_dir() / f"{sig_id}.png"
     img.save(out_path, format="PNG")
 
-    return {"id": sig_id, "filename": out_path.name, "size": out_path.stat().st_size}
+    # Default display name = the original upload's base name, so the library is
+    # readable before the user renames anything.
+    default_name = _clean_name(Path(filename).stem)
+    if default_name:
+        with _META_LOCK:
+            meta = _load_meta()
+            meta[sig_id] = {"name": default_name}
+            _save_meta(meta)
+
+    return {
+        "id": sig_id,
+        "filename": out_path.name,
+        "size": out_path.stat().st_size,
+        "name": default_name,
+    }
 
 
 def delete_signature(sig_id: str) -> bool:
@@ -128,6 +223,10 @@ def delete_signature(sig_id: str) -> bool:
     if not path.exists():
         return False
     path.unlink()
+    with _META_LOCK:
+        meta = _load_meta()
+        if meta.pop(sig_id, None) is not None:
+            _save_meta(meta)
     return True
 
 

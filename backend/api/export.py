@@ -13,6 +13,7 @@ from services import pdf_service
 from services.pdf_writer import export_pdf, save_output
 from services.composer import compose_page
 from services.signature_service import get_signatures_dir, is_valid_sig_id
+from services.history_service import save_entry
 
 router = APIRouter(prefix="/api/export", tags=["export"])
 
@@ -25,8 +26,35 @@ def _persist_copy(data: bytes, ext: str) -> None:
     signed bytes are already in hand, so log and return them regardless."""
     try:
         save_output(data, ext)
-    except OSError as e:
+    except Exception as e:
+        # Never block the user's download — the signed bytes are already in hand.
         logger.warning("Could not save server-side export copy: %s", e)
+
+
+def _save_history(
+    original: bytes,
+    result: bytes,
+    *,
+    filename: str,
+    ext: str,
+    pages_payload: list,
+    delete_list: list,
+) -> None:
+    """Persist a full history entry (original + result + layout) for later
+    re-editing. Best-effort, like _persist_copy — never blocks the download."""
+    try:
+        save_entry(
+            original,
+            result,
+            filename=filename,
+            ext=ext,
+            pages_payload=pages_payload,
+            delete_pages=delete_list,
+        )
+    except Exception as e:
+        # Best-effort, like _persist_copy — a failure here must never break the
+        # already-produced export response.
+        logger.warning("Could not save history entry: %s", e)
 
 
 # Map source extension -> (PIL format, response media type, output extension).
@@ -196,6 +224,14 @@ async def export_document(
 
         result_bytes = export_pdf(data, pages_payload, delete_pages=delete_list)
         _persist_copy(result_bytes, "pdf")
+        _save_history(
+            data,
+            result_bytes,
+            filename=file.filename or "document.pdf",
+            ext="pdf",
+            pages_payload=pages_payload,
+            delete_list=delete_list,
+        )
         return Response(
             content=result_bytes,
             media_type="application/pdf",
@@ -253,6 +289,14 @@ async def export_document(
         composed.convert("RGB").save(buf, format=fmt)
         result_bytes = buf.getvalue()
         _persist_copy(result_bytes, out_ext.lstrip("."))
+        _save_history(
+            data,
+            result_bytes,
+            filename=file.filename or f"document{out_ext}",
+            ext=out_ext.lstrip("."),
+            pages_payload=pages_payload,
+            delete_list=delete_list,
+        )
         return Response(
             content=result_bytes,
             media_type=media_type,

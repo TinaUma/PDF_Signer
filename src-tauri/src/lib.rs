@@ -14,6 +14,22 @@ fn api_port(state: tauri::State<ApiPort>) -> u16 {
     state.0
 }
 
+// Open an external URL in the user's default browser. The webview CSP is
+// `default-src 'self'`, so a plain <a href> can't navigate out; the frontend
+// calls this for the GitHub link in the About dialog. Restricted to the project
+// repository as defense-in-depth — the UI only ever passes that URL.
+#[tauri::command]
+fn open_external(app: tauri::AppHandle, url: String) -> Result<(), String> {
+    // Exact repo URL or a path beneath it. A bare starts_with would also match
+    // https://github.com/TinaUma/PDF_Signer.evil.com, so require the repo root
+    // followed by nothing or a '/'.
+    const REPO: &str = "https://github.com/TinaUma/PDF_Signer";
+    if url != REPO && !url.starts_with(&format!("{REPO}/")) {
+        return Err("blocked".into());
+    }
+    app.shell().open(url, None).map_err(|e| e.to_string())
+}
+
 // Ask the OS for a free loopback port, then release it so the sidecar can bind.
 // Hardcoding 8000 broke the app whenever something else already held it (e.g.
 // another local service) — the sidecar failed to bind and every request became
@@ -34,8 +50,17 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .manage(ApiPort(port))
-        .invoke_handler(tauri::generate_handler![api_port])
+        .invoke_handler(tauri::generate_handler![api_port, open_external])
         .setup(move |app| {
+            // Show the app version in the window title (e.g. "PDF Signer 1.1.0").
+            // The static title in tauri.conf.json is just the fallback; setting it
+            // here keeps it in lockstep with the real package version with no manual
+            // edits. Best-effort — a missing window must not abort startup.
+            let version = app.package_info().version.to_string();
+            if let Some(win) = app.get_webview_window("main") {
+                let _ = win.set_title(&format!("PDF Signer {version}"));
+            }
+
             // Per-user writable data dir (e.g. %APPDATA%\com.tinauuma.pdfsigner
             // on Windows, ~/Library/Application Support/... on macOS). User files
             // (signatures, exported docs) live here — NOT next to the exe — so

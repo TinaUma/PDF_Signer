@@ -48,7 +48,28 @@ export function useSignatures() {
     await load()
   }, [load])
 
+  // Multi-delete: fire all deletes, then reload once.
+  const removeMany = useCallback(async (ids) => {
+    await Promise.all(
+      ids.map((id) => fetch(`${api()}/${id}`, { method: 'DELETE' }).catch(() => {})),
+    )
+    await load()
+  }, [load])
+
+  const rename = useCallback(async (id, name) => {
+    const res = await fetch(`${api()}/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(resolveApiError(body.detail, t))
+    }
+    await load()
+  }, [load, t])
+
   const imageUrl = (id) => `${api()}/${id}/image`
 
-  return { signatures, loading, error, upload, remove: remove_, imageUrl, reload: load }
+  return { signatures, loading, error, upload, remove: remove_, removeMany, rename, imageUrl, reload: load }
 }

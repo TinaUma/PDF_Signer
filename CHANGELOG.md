@@ -33,11 +33,26 @@
 - Уникализация подписи (jitter): опциональная детерминированная вариация
   (поворот, масштаб, прозрачность, смещение), чтобы повторные наложения одной
   подписи не были пиксельно идентичны. Слайдер 0–100 %.
+- История подписаний: каждый экспорт сохраняет оригинал + результат + раскладку
+  размещённых подписей; запись можно открыть заново для редактирования или
+  скачать результат. Поддержано одиночное и массовое удаление (галочки). Работает
+  и в нативном приложении (app_data_dir), и в Docker (volume `/data`).
+- Имена подписей: переименование в библиотеке (двойной клик), имя по умолчанию из
+  имени файла; выбор галочками и массовое удаление подписей.
+- Справка «О программе»: версия приложения и ссылка на GitHub (в нативном
+  приложении ссылка открывается во внешнем браузере).
+- Версия приложения в заголовке окна.
 - Удаление страниц: обратимая пометка листа на исключение из итогового PDF.
 - Интернационализация: лёгкий слой RU/EN с переключателем языка, сохранением
   выбора и локализованными сообщениями об ошибках.
 
 #### Changed (Изменено)
+- Уникализация подписи теперь применяется к конкретной размещённой подписи
+  (свой ползунок в панели свойств), а не глобально ко всем — `jitter` хранится у
+  каждого экземпляра в payload экспорта.
+- UX исключения листов: понятная подпись кнопки «Исключить лист»/«Вернуть лист»,
+  обратимость, счётчик исключённых листов в тулбаре и полупрозрачная пометка
+  «Лист исключён» на холсте.
 - API возвращает стабильные коды ошибок (`{code, message}`) вместо смешанного
   RU/EN текста — локализует клиент.
 - Холст использует реальные размеры страницы вместо фиксированного A4.
@@ -50,6 +65,11 @@
 - Имена выходных файлов с uuid-суффиксом (нет коллизий при экспорте в одну секунду).
 
 #### Fixed (Исправлено)
+- Подпись не загружалась в нативном приложении: миниатюра в библиотеке и
+  размещённая на холсте подпись были невидимы — CSP `img-src` не разрешал
+  `http://127.0.0.1:*` (локальный сидекар). Добавлен в `img-src`; это же
+  чинило «неперетаскиваемость» (подпись грузилась, но не отображалась).
+- Отсутствовавший `/favicon.svg` (404 из `index.html`) — добавлена иконка.
 - Экспорт PDF проверял координаты против неверной единицы (`page.rect*2`);
   теперь — против stage-пространства (ложные отклонения/пропуски устранены).
 - Поворот подписи вращался вокруг центра и смещал подпись на ~14–22px от места
@@ -103,11 +123,26 @@
   burned in on export, with an "all pages" action.
 - Signature uniquification ("jitter"): optional deterministic per-placement
   variation (rotation, scale, opacity, offset) via a 0–100 % slider.
+- Signing history: every export stores the original + result + the placed-
+  signature layout; an entry can be reopened for editing or its result
+  downloaded. Single and bulk (checkbox) delete are supported. Works in both the
+  native app (app_data_dir) and Docker (the `/data` volume).
+- Signature names: rename in the library (double-click), default name taken from
+  the uploaded file; checkbox multi-select and bulk delete of signatures.
+- Help / About dialog: app version and a GitHub link (in the native app the link
+  opens in the external browser).
+- App version shown in the window title.
 - Page deletion: reversible per-page toggle excluding a page from the export.
 - Internationalization: lightweight RU/EN layer with a language switcher,
   persisted choice, and localized error messages.
 
 #### Changed
+- Uniquification now applies to a specific placed signature (its own slider in
+  the properties panel) instead of globally to all of them — `jitter` is stored
+  per instance in the export payload.
+- Page-exclusion UX: a clear "Exclude page"/"Restore page" button, reversibility,
+  an excluded-count badge in the toolbar, and a translucent "Page excluded"
+  marker on the canvas.
 - The API returns stable error codes (`{code, message}`) instead of mixed
   Russian/English text; the client localizes them.
 - The editor canvas uses each document's real dimensions instead of a fixed A4.
@@ -120,6 +155,11 @@
 - Output filenames get a uuid suffix (no same-second collisions).
 
 #### Fixed
+- Signatures didn't load in the native app: the library thumbnail and the placed
+  signature on the canvas were invisible — the CSP `img-src` did not allow
+  `http://127.0.0.1:*` (the local sidecar). Added to `img-src`; this also fixed
+  the "can't drag" symptom (the image loaded but never rendered).
+- Missing `/favicon.svg` (a 404 from `index.html`) — icon added.
 - PDF export validated coordinates against the wrong unit (`page.rect*2`); now
   against the stage space (no more false rejections/passes).
 - Signature rotation pivoted about the centre and shifted the signature ~14–22px

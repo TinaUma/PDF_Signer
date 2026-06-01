@@ -3,7 +3,11 @@ import { FALLBACK_DIMS } from '../constants'
 // Build the /api/export `pages` payload from the per-page layer map. Only pages
 // that have signatures AND are not marked for deletion are included; each uses
 // its own real dimensions (so the backend's sx == sy).
-export function buildExportPayload({ layersByPage, pageDims, deletedPages, jitter }) {
+//
+// Uniquification ("jitter") is per placed signature: each layer carries its own
+// `jitter` (0..1), so the user can uniquify one specific placement and leave the
+// rest pixel-exact. It is sent on each signature, not on the page.
+export function buildExportPayload({ layersByPage, pageDims, deletedPages }) {
   return Object.keys(layersByPage)
     .map(Number)
     .filter((idx) => layersByPage[idx]?.length > 0 && !deletedPages.has(idx))
@@ -13,7 +17,6 @@ export function buildExportPayload({ layersByPage, pageDims, deletedPages, jitte
         page_idx: idx,
         stage_w: dims.width,
         stage_h: dims.height,
-        jitter: jitter / 100,
         signatures: layersByPage[idx].map((l) => ({
           id: l.sigId,
           x: l.x,
@@ -22,6 +25,7 @@ export function buildExportPayload({ layersByPage, pageDims, deletedPages, jitte
           h: l.height,
           angle: l.rotation,
           opacity: l.opacity,
+          jitter: l.jitter ?? 0,
         })),
       }
     })

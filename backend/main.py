@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.document import router as document_router
 from api.export import router as export_router
 from api.signatures import router as signatures_router
+from api.history import router as history_router
 
 app = FastAPI(title="PDF Signer API", version="1.1.0")
 
@@ -22,7 +23,7 @@ ALLOWED_ORIGINS = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type"],  # the API only needs the upload content type
 )
 
@@ -41,6 +42,7 @@ async def _api_security_headers(request, call_next):
 app.include_router(document_router)
 app.include_router(signatures_router)
 app.include_router(export_router)
+app.include_router(history_router)
 
 
 @app.get("/health")

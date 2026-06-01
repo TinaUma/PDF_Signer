@@ -193,6 +193,15 @@ export function CanvasEditor({ pageDataUrl, pageWidth = 794, pageHeight = 1123, 
                 onChange={(e) => updateLayerLive(selectedLayer.id, { opacity: Number(e.target.value) / 100 })}
                 className="w-full" />
             </label>
+            <label className="flex flex-col gap-1" title={t('props.uniquifyHint')}>
+              <span className={(selectedLayer.jitter || 0) > 0 ? 'text-blue-600 font-medium' : 'text-gray-500'}>
+                {t('props.uniquify')} {Math.round((selectedLayer.jitter || 0) * 100)}%
+              </span>
+              <input type="range" min={0} max={100} value={Math.round((selectedLayer.jitter || 0) * 100)}
+                onPointerDown={checkpoint}
+                onChange={(e) => updateLayerLive(selectedLayer.id, { jitter: Number(e.target.value) / 100 })}
+                className="w-full" />
+            </label>
             <button onClick={() => { removeLayer(selectedLayer.id); setSelectedId(null) }}
               className="mt-2 text-red-500 border border-red-200 rounded py-1 hover:bg-red-50">
               {t('props.delete')}
