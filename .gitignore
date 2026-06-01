@@ -2,6 +2,9 @@
 __pycache__/
 *.py[cod]
 *.pyo
+.coverage
+.coverage.*
+htmlcov/
 .venv/
 venv/
 env/
@@ -19,8 +22,19 @@ dist/
 data/signatures/
 data/output/
 
+# PyInstaller sidecar build workpath (scripts/build-exe.sh --workpath build_pyi)
+backend/build_pyi/
+
 # Tauri build artifacts
 src-tauri/target/
+src-tauri/gen/
+src-tauri/binaries/
+
+# App icon committed as a brand asset: app-icon.png is the 1024px master,
+# src-tauri/icons/* are the platform sizes fanned out from it via `tauri icon`.
+
+# Collected build output (installers) — produced by scripts/build-exe.sh / CI
+/release/
 
 # OS
 .DS_Store
@@ -34,15 +48,14 @@ Thumbs.db
 .env
 .env.local
 
-# TAUSIK — db-wal и lock-файлы не нужны
-.tausik/*.db-wal
-.tausik/*.db-shm
+# TAUSIK — весь локальный рантайм фреймворка (venv, БД, конфиг с абсолютными путями)
+.tausik/
 .tausik-lib/
 
 # Claude Code / TAUSIK internal
 .claude/
+.claude-project/
+_cache/
 AGENTS.md
-
-.tausik/vendor/
-.tausik/rag/
-.tausik/tausik.log
+.mcp.json
+release-build.log

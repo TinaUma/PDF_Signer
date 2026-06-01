@@ -1,33 +1,62 @@
 import { useCallback } from 'react'
 import { useHistory } from './useHistory'
+import { MIN_LAYER_SIZE } from '../constants'
 
-export function useCanvas() {
-  const { state: layers, push, undo, redo, canUndo, canRedo } = useHistory([])
+export function useCanvas(initialLayers = []) {
+  const { state: layers, push, set, undo, redo, canUndo, canRedo } = useHistory(initialLayers)
 
   const addSignature = useCallback((sig, x = 100, y = 100, width = 200, height = 80) => {
     push([...layers, {
       id: `${sig.id}-${Date.now()}`,
+      type: 'signature',
       sigId: sig.id,
       x, y,
-      width: Math.max(20, width),
-      height: Math.max(20, height),
+      width: Math.max(MIN_LAYER_SIZE, width),
+      height: Math.max(MIN_LAYER_SIZE, height),
+      rotation: 0,
+      opacity: 1,
+      jitter: 0,  // 0..1 — per-instance uniquification, set in the properties panel
+    }])
+  }, [layers, push])
+
+  // Add a text annotation. Returns the new layer id so the caller can select it
+  // (and immediately open the inline editor).
+  const addText = useCallback((x = 80, y = 80) => {
+    const id = `text-${Date.now()}`
+    push([...layers, {
+      id,
+      type: 'text',
+      text: '',
+      x, y,
+      width: 240,            // wrap width (px); height follows the content
+      fontSize: 32,
+      fontFamily: 'sans',    // logical key (lib/fonts) — sans | serif | handwriting
+      bold: false,
+      italic: false,
+      color: '#111827',
+      align: 'left',
       rotation: 0,
       opacity: 1,
     }])
+    return id
   }, [layers, push])
 
   const updateLayer = useCallback((id, props) => {
     push(layers.map((l) => l.id === id ? { ...l, ...props } : l))
   }, [layers, push])
 
+  // Live (no-history) layer patch — for continuous edits (number fields, slider).
+  const updateLayerLive = useCallback((id, props) => {
+    set(layers.map((l) => l.id === id ? { ...l, ...props } : l))
+  }, [layers, set])
+
+  // Record a single undo point at the current state (call at edit-session start).
+  const checkpoint = useCallback(() => push(layers), [layers, push])
+
   const removeLayer = useCallback((id) => {
     if (!id) return  // graceful: no selection
     push(layers.filter((l) => l.id !== id))
   }, [layers, push])
 
-  const copyToAllPages = useCallback((totalPages) => {
-    return Array.from({ length: totalPages }, () => [...layers])
-  }, [layers])
-
-  return { layers, addSignature, updateLayer, removeLayer, copyToAllPages, undo, redo, canUndo, canRedo }
+  return { layers, addSignature, addText, updateLayer, updateLayerLive, checkpoint, removeLayer, undo, redo, canUndo, canRedo }
 }

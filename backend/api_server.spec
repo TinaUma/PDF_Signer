@@ -2,19 +2,16 @@
 # Run: pyinstaller api_server.spec
 # Output: dist/api-server (or dist/api-server.exe on Windows)
 
-import sys
-from pathlib import Path
-
 block_cipher = None
 
+# SPECPATH is injected by PyInstaller and is the directory of this spec file.
 a = Analysis(
     ['main.py'],
-    pathex=[str(Path(__file__).parent)],
+    pathex=[SPECPATH],
     binaries=[],
-    datas=[
-        # Bundle rembg U2Net model
-        (str(Path.home() / '.u2net'), '.u2net'),
-    ],
+    # Bundle the text-annotation fonts so the sidecar renders text offline; they
+    # land under sys._MEIPASS/fonts, where services.text_render._fonts_dir looks.
+    datas=[('fonts', 'fonts')],
     hiddenimports=[
         'uvicorn.logging',
         'uvicorn.loops',
@@ -26,8 +23,6 @@ a = Analysis(
         'uvicorn.protocols.websockets.auto',
         'uvicorn.lifespan',
         'uvicorn.lifespan.on',
-        'rembg',
-        'onnxruntime',
     ],
     hookspath=[],
     runtime_hooks=[],

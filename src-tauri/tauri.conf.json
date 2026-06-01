@@ -1,6 +1,6 @@
 {
   "productName": "PDF Signer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "identifier": "com.tinauuma.pdfsigner",
   "build": {
     "frontendDist": "../frontend/dist",
@@ -9,22 +9,29 @@
     "beforeBuildCommand": "cd ../frontend && npm run build"
   },
   "app": {
+    "withGlobalTauri": false,
     "windows": [
       {
         "title": "PDF Signer",
         "width": 1280,
         "height": 800,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "dragDropEnabled": false
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' http://localhost:8000; img-src 'self' blob: data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+      "csp": "default-src 'self'; connect-src 'self' http://127.0.0.1:*; img-src 'self' blob: data: http://127.0.0.1:*; script-src 'self'; style-src 'self' 'unsafe-inline'"
     }
   },
   "bundle": {
     "active": true,
     "targets": "all",
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

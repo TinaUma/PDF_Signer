@@ -1,0 +1,13 @@
+{
+  "identifier": "default",
+  "description": "Core APIs plus permission to run the bundled FastAPI sidecar.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "dialog:default",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [{ "name": "api-server", "sidecar": true }]
+    }
+  ]
+}

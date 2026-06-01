@@ -4,9 +4,11 @@ services:
     environment:
       - DATA_DIR=/data
     volumes:
-      - ./data:/data
-    ports:
-      - "8000:8000"
+      - data:/data
+    # No host port mapping: the unauthenticated API is reached only by the
+    # frontend nginx proxy over the internal network, never exposed to the LAN.
+    expose:
+      - "8000"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 15s
@@ -17,7 +19,10 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "8080:80"
+      - "8080:8080"
     depends_on:
       backend:
         condition: service_healthy
+
+volumes:
+  data:

@@ -11,5 +11,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Run as a non-root user. Pre-create the data dir it owns so the named volume
+# inherits writable ownership on first mount.
+RUN useradd --create-home --uid 10001 appuser \
+    && mkdir -p /data \
+    && chown -R appuser:appuser /app /data
+USER appuser
+
 EXPOSE 8000
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
