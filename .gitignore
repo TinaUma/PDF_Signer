@@ -58,3 +58,6 @@ _cache/
 AGENTS.md
 .mcp.json
 release-build.log
+
+# Claude Design exports (source files, не деплоим напрямую)
+SignDrop-standalone.html

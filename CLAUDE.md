@@ -122,6 +122,22 @@ Always respond in the user's language.
 
 <!-- DYNAMIC:START -->
 ## Current State
-Session: #7 (active) | Branch: main | Version: 1.3.7
-Tasks: 19/19 done, 0 active, 0 blocked
+Session: #8 (active) | Branch: main | Version: 1.4.0
+Tasks: 21/21 done, 0 active, 0 blocked
+
+### Memory tail
+Decisions (4):
+- #4 Деплой на VPS через docker compose, домен tinacodes.space + Let's Encrypt SSL через Nginx reverse proxy
+- #3 Убрать переключение режимов — канвас всегда активен поверх документа
+- #2 Export coordinate scaling: frontend sends stage_w/stage_h, backend applies scale factor pixmap/stage to all signature co
+- #1 Render DPI raised from 150 to 200 for PDF preview and export
+Conventions (5):
+- #11 Закрывать задачи без прогона тестов
+- #9 Протокол репорта багов от пользователя
+- #8 Закрывать задачи без прогона тестов
+- #7 Закрывать задачи без полного прогона тестов
+- #5 Закрывать задачи без прогона тестов
+Dead ends (2):
+- #6 Docker image < 600MB с rembg
+- #3 Privacy-by-design для ВСЕХ данных — ошибочное требование
 <!-- DYNAMIC:END -->
