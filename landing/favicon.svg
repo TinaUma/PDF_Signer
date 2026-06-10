@@ -1,13 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-  <rect width="200" height="200" rx="40" fill="#0a1ab5"/>
-  <g transform="translate(64 50) scale(0.92)">
-    <rect x="30" y="14" width="58" height="70" rx="4" fill="#ffffff" mask="url(#m)"/>
-    <mask id="m">
-      <path d="M45 88C39 68 44 42 53 24C55 20 59 18 64 19L86 24C90 25 91 29 89 33C80 56 66 78 52 89C49 91 46 91 45 88Z" fill="#fff"/>
-      <path d="M71 25C63 47 56 67 47 86" stroke="#000" stroke-width="2.8" stroke-linecap="round" fill="none"/>
-      <circle cx="65" cy="40" r="6" fill="#000"/>
-    </mask>
-    <path d="M45 88C39 68 44 42 53 24C55 20 59 18 64 19L86 24C90 25 91 29 89 33C80 56 66 78 52 89C49 91 46 91 45 88Z" fill="#ffffff" mask="url(#m)"/>
-    <path d="M43 86C39 95 30 100 30 109C30 115.6 35.6 121 43 121C50.4 121 56 115.6 56 109C56 100 47 95 43 86Z" fill="#7e93ff"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="7" fill="#0a1ab5"/>
+  <path d="M16 6C16 6 9 13.5 9 19C9 22.9 12.1 26 16 26C19.9 26 23 22.9 23 19C23 13.5 16 6 16 6Z" fill="#7e93ff"/>
+  <path d="M12 19C12 16.5 14 13 16 10" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
 </svg>

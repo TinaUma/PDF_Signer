@@ -103,19 +103,25 @@
           }
         });
 
-        // Docker buttons (<button> / non-anchor elements)
-        document.querySelectorAll('button, [role="button"]').forEach(function(btn) {
-          var txt = btn.textContent.trim();
-          if (txt.toLowerCase().indexOf('docker') >= 0 && !btn.dataset.dockerPatched) {
-            btn.dataset.dockerPatched = '1';
-            btn.style.cursor = 'pointer';
-            btn.addEventListener('click', function(e) {
-              e.stopPropagation();
-              window.open('https://github.com/TinaUma/signdrop#docker', '_blank', 'noopener,noreferrer');
-            });
-          }
-        });
       }
+
+      // Docker — document-level capture to intercept before any component handler
+      document.addEventListener('click', function(e) {
+        var el = e.target;
+        for (var i = 0; i < 6; i++) {
+          if (!el || el === document) break;
+          var txt = el.textContent || '';
+          if (txt.trim().toLowerCase().indexOf('docker') >= 0 &&
+              txt.trim().length < 40) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+            window.open('https://github.com/TinaUma/signdrop#docker', '_blank', 'noopener,noreferrer');
+            return;
+          }
+          el = el.parentElement;
+        }
+      }, true);
+
       patchLinks();
       setTimeout(patchLinks, 1500);
       setTimeout(patchLinks, 4000);
