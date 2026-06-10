@@ -5,12 +5,14 @@
 **Инструмент для наложения рукописной подписи на документы**  
 **A tool for placing handwritten signatures on documents**
 
-[![Status](https://img.shields.io/badge/version-1.1.1-brightgreen)](https://github.com/TinaUma/signdrop)
+[![Status](https://img.shields.io/badge/version-1.1.1-brightgreen)](https://github.com/TinaUma/signdrop/releases)
+[![Windows](https://img.shields.io/badge/Windows-.exe%20%2F%20.msi-0078D4?logo=windows&logoColor=white)](https://github.com/TinaUma/signdrop/releases)
 [![Python](https://img.shields.io/badge/python-3.11-blue?logo=python&logoColor=white)](https://python.org)
 [![React](https://img.shields.io/badge/react-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Docker](https://img.shields.io/badge/docker-compose-2496ED?logo=docker&logoColor=white)](https://docker.com)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
+[![Landing](https://img.shields.io/badge/website-signdrop.site-0a1ab5)](https://signdrop.site)
 
 [Русский](#русский) · [English](#english)
 
@@ -74,7 +76,8 @@ docker compose up
 
 Открыть в браузере: **http://localhost:8080**
 
-> 🌐 **Живое демо:** [https://tinacodes.space](https://tinacodes.space)
+> 🌐 **Живое демо:** [https://tinacodes.space](https://tinacodes.space)  
+> 🏠 **Сайт проекта:** [https://signdrop.site](https://signdrop.site)
 
 Подписи сохраняются в `./data/signatures/` и не пропадают между перезапусками.
 
@@ -94,7 +97,7 @@ docker compose -f docker-compose.yml -f docker-compose.demo.yml up
 > собирает под текущую ОС; инструкции и пререквизиты в
 > [docs/DEVELOPMENT.ru.md](docs/DEVELOPMENT.ru.md#деплой). Windows-first
 > (проверено), macOS/Linux экспериментальны; для веба используйте Docker.
-> 📄 Техническое задание: [docs/PDF_Signer_TZ_v1.0.pdf](docs/PDF_Signer_TZ_v1.0.pdf)
+> 📄 Техническое задание: [docs/SignDrop_TZ_v1.0.pdf](docs/SignDrop_TZ_v1.0.pdf)
 > 🛠 Руководство разработчика: [docs/DEVELOPMENT.ru.md](docs/DEVELOPMENT.ru.md)
 > 📜 История изменений: [CHANGELOG.md](CHANGELOG.md#русский)
 
@@ -186,7 +189,8 @@ docker compose up
 
 Open in browser: **http://localhost:8080**
 
-> 🌐 **Live demo:** [https://tinacodes.space](https://tinacodes.space)
+> 🌐 **Live demo:** [https://tinacodes.space](https://tinacodes.space)  
+> 🏠 **Project website:** [https://signdrop.site](https://signdrop.site)
 
 Signatures are stored in `./data/signatures/` and persist across restarts.
 
@@ -206,7 +210,7 @@ Full guide (HTTPS/reverse proxy, verification, updating, troubleshooting): [docs
 > builds for the host OS; instructions and prerequisites in
 > [docs/DEVELOPMENT.en.md](docs/DEVELOPMENT.en.md#deployment). Windows-first
 > (verified), macOS/Linux experimental; for the web app use Docker.
-> 📄 Spec: [docs/PDF_Signer_TZ_v1.0.pdf](docs/PDF_Signer_TZ_v1.0.pdf)
+> 📄 Spec: [docs/SignDrop_TZ_v1.0.pdf](docs/SignDrop_TZ_v1.0.pdf)
 > 🛠 Developer guide: [docs/DEVELOPMENT.en.md](docs/DEVELOPMENT.en.md)
 > 📜 Changelog: [CHANGELOG.md](CHANGELOG.md#english)
 
