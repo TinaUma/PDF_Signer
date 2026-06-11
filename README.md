@@ -2,8 +2,7 @@
 
 # SignDrop
 
-**Инструмент для наложения рукописной подписи на документы**  
-**A tool for placing handwritten signatures on documents**
+**Инструмент для наложения рукописной подписи на документы**
 
 [![Status](https://img.shields.io/badge/version-1.1.1-brightgreen)](https://github.com/TinaUma/signdrop/releases)
 [![Windows](https://img.shields.io/badge/Windows-.exe%20%2F%20.msi-0078D4?logo=windows&logoColor=white)](https://github.com/TinaUma/signdrop/releases)
@@ -14,23 +13,19 @@
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 [![Landing](https://img.shields.io/badge/website-signdrop.site-0a1ab5)](https://signdrop.site)
 
-[Русский](#русский) · [English](#english)
+[English version →](README.en.md)
 
 </div>
 
 ---
 
-<a name="русский"></a>
-
-## 🇷🇺 Русский
-
-### Что это
+## Что это
 
 SignDrop — инструмент для наложения рукописной подписи (скан или фото) на документы PDF, JPEG, PNG. Работает **полностью локально** — никакие данные не покидают устройство. Без облаков, без регистрации.
 
 > Запустил → открыл файл → перетащил подпись → сохранил.
 
-### Скриншоты
+## Скриншоты
 
 <div align="center">
 
@@ -48,23 +43,47 @@ SignDrop — инструмент для наложения рукописной
 
 </div>
 
-### Возможности
+## Возможности
 
-- 📄 PDF (многостраничный) и изображения — JPG, PNG, TIFF, WEBP до 50 МБ
-- ✍️ Библиотека подписей — загрузи один раз, используй всегда
-- 🪄 Автоматическое удаление фона — адаптивный алгоритм на основе яркости, работает офлайн
-- 🖱️ Интерактивный холст — drag & drop, resize, **rotate**, прозрачность
-- ↩️ Undo / Redo — в тулбаре и через Ctrl+Z / Ctrl+Y
-- 💾 Экспорт PDF и JPEG — оригинал не изменяется
-- 🗂️ Многостраничная подпись — свои подписи на каждой странице + кнопка «на все страницы»
-- 🎲 Уникализация подписи — деформация каждого наложения (наклон, пропорции), чтобы подписи не были идентичны
-- 🔤 Текстовые поля — добавь текст с выбором шрифта (без засечек / с засечками / рукописный), размера, жирности, курсива, цвета и выравнивания
-- 🌐 Языки RU / EN — переключение интерфейса
-- 🧭 Пошаговые подсказки — сайдбар ведёт по шагам, активный шаг подсвечен
-- ⚡ Без переключения режимов — канвас готов сразу после загрузки документа
-- 🔒 Всё локально — никаких облаков, никакой регистрации
+### Документы и форматы
+- 📄 **PDF (многостраничный)** и изображения — JPG, PNG, TIFF, WEBP до 50 МБ
+- 💾 **Экспорт в PDF и JPEG** — оригинал не изменяется
+- 📁 **Умное именование файлов** — сохранённый файл называется `договор_signed.pdf`, а не просто `signed.pdf`
+- 🗑️ **Удаление страниц из PDF** — исключи ненужные страницы из итогового файла
 
-### Быстрый старт
+### Подписи
+- ✍️ **Библиотека подписей** — загрузи один раз, используй всегда
+- 🪄 **Автоматическое удаление фона** — адаптивный алгоритм на основе яркости, работает офлайн
+- ✏️ **Переименование подписей** — двойной клик по имени в библиотеке
+- ☑️ **Мультиселект и массовое удаление** подписей в библиотеке
+
+### Работа на канвасе
+- 🖱️ **Интерактивный холст** — drag & drop, resize, поворот, прозрачность
+- ↩️ **Undo / Redo** — в тулбаре и через Ctrl+Z / Ctrl+Y
+- 🗂️ **Многостраничная подпись** — свои подписи на каждой странице + кнопка «на все страницы»
+- 🎲 **Уникализация подписи с живым превью** — каждое наложение деформируется (наклон, пропорции, смещение); видишь результат на канвасе до экспорта — подписи не идентичны
+
+### Текстовые аннотации
+- 🔤 **Текстовые поля** — добавь текст прямо на документ
+- 🖋️ **Выбор шрифта** — без засечек / с засечками / рукописный (Caveat)
+- 🎨 **Стилизация** — размер, жирность, курсив, цвет, выравнивание
+- 👁️ **WYSIWYG** — на канвасе точно так же, как в итоговом файле
+
+### История и управление
+- 🕐 **История подписаний** — каждый экспорт сохраняется; можно открыть повторно, скачать результат или удалить
+- ❓ **Диалог «О программе»** — версия приложения + ссылка на GitHub
+
+### Интерфейс
+- 🌐 **Языки RU / EN** — переключение интерфейса
+- 🧭 **Пошаговые подсказки** — сайдбар ведёт по шагам, активный шаг подсвечен
+- ⚡ **Без переключения режимов** — канвас готов сразу после загрузки документа
+
+### Приватность и деплой
+- 🔒 **Всё локально** — никаких облаков, никакой регистрации
+- 🌍 **Демо-режим (stateless)** — для публичного хостинга: ничего не сохраняется на сервере, все данные только в браузере (IndexedDB)
+- 💾 **Нативный диалог сохранения** в Windows .exe — стандартное окно «Сохранить как»
+
+## Быстрый старт
 
 **Требования:** Docker Desktop
 
@@ -81,168 +100,51 @@ docker compose up
 
 Подписи сохраняются в `./data/signatures/` и не пропадают между перезапусками.
 
-#### Публичное демо (ничего не хранится на сервере)
-
-Для публичного демо запустите stateless-режим: подписи и документы обрабатываются в памяти, а единственная копия остаётся в браузере посетителя (IndexedDB). На сервере не сохраняется ничего, том данных не монтируется.
+### Публичное демо (ничего не хранится на сервере)
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.demo.yml up
 ```
 
-Каждый посетитель полностью изолирован, чужие файлы на сервере не накапливаются. В интерфейсе показывается баннер демо-режима. Обычный `docker compose up` (без второго файла) остаётся полностью персистентным.
+Каждый посетитель полностью изолирован, чужие файлы на сервере не накапливаются. В интерфейсе показывается баннер демо-режима.
 
 Полное руководство (HTTPS/reverse-proxy, проверка, обновление, диагностика): [docs/DEMO.ru.md](docs/DEMO.ru.md).
 
-> 🖥️ Нативная сборка (Tauri) для Windows / macOS / Linux — `scripts/build-exe.sh`
-> собирает под текущую ОС; инструкции и пререквизиты в
-> [docs/DEVELOPMENT.ru.md](docs/DEVELOPMENT.ru.md#деплой). Windows-first
-> (проверено), macOS/Linux экспериментальны; для веба используйте Docker.
-> 📄 Техническое задание: [docs/SignDrop_TZ_v1.0.pdf](docs/SignDrop_TZ_v1.0.pdf)
-> 🛠 Руководство разработчика: [docs/DEVELOPMENT.ru.md](docs/DEVELOPMENT.ru.md)
-> 📜 История изменений: [CHANGELOG.md](CHANGELOG.md#русский)
+> 🖥️ Нативная сборка (Tauri) для Windows — `scripts/build-exe.sh`  
+> 📄 Техническое задание: [docs/SignDrop_TZ_v1.0.pdf](docs/SignDrop_TZ_v1.0.pdf)  
+> 🛠 Руководство разработчика: [docs/DEVELOPMENT.ru.md](docs/DEVELOPMENT.ru.md)  
+> 📜 История изменений: [CHANGELOG.md](CHANGELOG.md)
 
-### Как пользоваться
+## Как пользоваться
 
 1. **Загрузи подпись** — левая панель → «+ Загрузить подпись» (JPG, PNG, TIFF, WEBP)  
    Фон удалится автоматически, можно отключить тумблером
 2. **Открой документ** — кнопка «Открыть документ» или перетащи файл
 3. **Перетащи** подпись из библиотеки на документ
 4. **Настрой** — двигай, масштабируй, крути, меняй прозрачность; для многостраничных — «на все страницы»
-5. **Сохрани** — «Вставить и сохранить» → скачается готовый файл
+5. **Добавь текст** (опционально) — кнопка «Текст» в тулбаре, выбери шрифт и стиль
+6. **Сохрани** — «Вставить и сохранить» → скачается готовый файл
 
-### Стек технологий
+## Стек технологий
 
 | Слой | Технология |
 |---|---|
 | Frontend | React 19 · Vite · Tailwind CSS · **Konva.js** |
 | Backend | **FastAPI** · Python 3.11 · Uvicorn |
 | PDF (рендер) | **pdfjs-dist** (Mozilla, в браузере) |
-| PDF (запись) | **PyMuPDF** (burn-in подписи) |
+| PDF (запись) | **PyMuPDF** (burn-in подписи и текста) |
 | Удаление фона | Алгоритм на основе яркости пикселей · NumPy · Pillow |
-| Упаковка | **Docker Compose** · nginx · (Tauri — экспериментально) |
+| Упаковка | **Docker Compose** · nginx · (Tauri — Windows) |
 
-### Шрифты
+## Шрифты
 
 Текстовые поля используют встроенные шрифты: **DejaVu Sans / Serif** (свободная лицензия) и **Caveat** (рукописный, [OFL](https://openfontlicense.org)). Тексты лицензий — в `backend/fonts/` и `frontend/public/fonts/`.
 
-### Автор
+## Автор
 
 Разработано [TinaUma](https://github.com/TinaUma) · портфолио-проект  
 AI-ассистент: [Claude Code](https://claude.ai/code) by Anthropic  
 Процесс разработки под управлением [TAUSIK](https://github.com/Kibertum/tausik-core) — AI-agent governance ([SENAR v1.3](https://senar.tech))
-
----
-
-<a name="english"></a>
-
-## 🇬🇧 English
-
-### What is it
-
-SignDrop is a tool for placing a handwritten signature (scan or photo) onto PDF and image documents. Works **completely offline** — no data ever leaves your device. No cloud, no registration.
-
-> Launch → open file → drag your signature → save.
-
-### Screenshots
-
-<div align="center">
-
-![Interface — step guide and signature on document](screenshots/01-interface.png)
-
-*Step-by-step hints in sidebar, canvas ready immediately, export button activates once a signature is placed*
-
-![Result — signed document](screenshots/02-signed-document.png)
-
-*Document signed — signature placed exactly where needed*
-
-![Signature rotation](screenshots/03-rotate-signature.png)
-
-*Rotate, scale, opacity — full control*
-
-</div>
-
-### Features
-
-- 📄 PDF (multi-page) and images — JPG, PNG, TIFF, WEBP up to 50 MB
-- ✍️ Signature library — upload once, reuse anytime
-- 🪄 Automatic background removal — luminance-based adaptive algorithm, works offline
-- 🖱️ Interactive canvas — drag & drop, resize, **rotate**, opacity control
-- ↩️ Undo / Redo — in the toolbar and via Ctrl+Z / Ctrl+Y
-- 💾 Export to PDF and JPEG — original file stays untouched
-- 🗂️ Multi-page signing — per-page signatures + an "all pages" action
-- 🎲 Signature uniquification — per-placement deformation (slant, proportions) so signatures aren't identical
-- 🔤 Text boxes — add text with a font choice (sans / serif / handwriting), size, bold, italic, color and alignment
-- 🌐 RU / EN — UI language switch
-- 🧭 Step-by-step hints — sidebar guides through the workflow, active step highlighted
-- ⚡ No mode switching — canvas is ready immediately after loading a document
-- 🔒 Fully local — no cloud, no registration
-
-### Quick Start
-
-**Requirements:** Docker Desktop
-
-```bash
-git clone https://github.com/TinaUma/signdrop.git
-cd signdrop
-docker compose up
-```
-
-Open in browser: **http://localhost:8080**
-
-> 🌐 **Live demo:** [https://tinacodes.space](https://tinacodes.space)  
-> 🏠 **Project website:** [https://signdrop.site](https://signdrop.site)
-
-Signatures are stored in `./data/signatures/` and persist across restarts.
-
-#### Public demo (nothing stored on the server)
-
-For a public demo, run the stateless mode: signatures and documents are processed in memory and the only copy stays in the visitor's browser (IndexedDB). The server persists nothing and no data volume is mounted.
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.demo.yml up
-```
-
-Every visitor is fully isolated and no one else's files accumulate on the server. The UI shows a demo-mode banner. A plain `docker compose up` (without the second file) stays fully persistent.
-
-Full guide (HTTPS/reverse proxy, verification, updating, troubleshooting): [docs/DEMO.en.md](docs/DEMO.en.md).
-
-> 🖥️ Native (Tauri) builds for Windows / macOS / Linux — `scripts/build-exe.sh`
-> builds for the host OS; instructions and prerequisites in
-> [docs/DEVELOPMENT.en.md](docs/DEVELOPMENT.en.md#deployment). Windows-first
-> (verified), macOS/Linux experimental; for the web app use Docker.
-> 📄 Spec: [docs/SignDrop_TZ_v1.0.pdf](docs/SignDrop_TZ_v1.0.pdf)
-> 🛠 Developer guide: [docs/DEVELOPMENT.en.md](docs/DEVELOPMENT.en.md)
-> 📜 Changelog: [CHANGELOG.md](CHANGELOG.md#english)
-
-### How to use
-
-1. **Upload your signature** — left panel → "+ Upload signature" (JPG, PNG, TIFF, WEBP)  
-   Background is removed automatically; toggle to disable
-2. **Open a document** — click "Open document" or drag & drop a file
-3. **Drag** a signature from the library onto the document
-4. **Adjust** — move, scale, rotate, set opacity; for multi-page docs use "all pages"
-5. **Save** — "Embed & Save" → the signed file downloads automatically
-
-### Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Frontend | React 19 · Vite · Tailwind CSS · **Konva.js** |
-| Backend | **FastAPI** · Python 3.11 · Uvicorn |
-| PDF (render) | **pdfjs-dist** (Mozilla, in browser) |
-| PDF (write) | **PyMuPDF** (signature burn-in) |
-| Background removal | Luminance-based pixel algorithm · NumPy · Pillow |
-| Packaging | **Docker Compose** · nginx · (Tauri — experimental) |
-
-### Fonts
-
-Text boxes use bundled fonts: **DejaVu Sans / Serif** (free license) and **Caveat** (handwriting, [OFL](https://openfontlicense.org)). License texts live in `backend/fonts/` and `frontend/public/fonts/`.
-
-### Author
-
-Built by [TinaUma](https://github.com/TinaUma) · portfolio project  
-AI assistant: [Claude Code](https://claude.ai/code) by Anthropic  
-Development governed by [TAUSIK](https://github.com/Kibertum/tausik-core) — AI-agent governance ([SENAR v1.3](https://senar.tech))
 
 ---
 
